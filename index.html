@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Aplicación web de control para la Excavadora IoT: joystick, botones, paro de emergencia y DEMO sobre la API en AWS.">
+  <meta name="theme-color" content="#15171B">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Excavadora IoT · Control</title>
+
+  <!-- Favicon propio (ruta relativa: funciona en la subruta de GitHub Pages) -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- Tipografías, Bootstrap 5 e iconos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+  <link href="css/estop.css" rel="stylesheet">
+</head>
+<body>
+  <a class="visually-hidden-focusable skip-link" href="#zonaControl">Saltar al control</a>
+
+  <!-- ===================== ENCABEZADO ===================== -->
+  <header class="app-header">
+    <div class="container-xl d-flex align-items-center gap-3 py-2">
+      <img src="assets/favicon.svg" alt="" width="46" height="46" class="app-logo">
+      <div class="flex-grow-1 min-w-0">
+        <h1 class="app-title mb-0">Excavadora IoT</h1>
+        <p class="app-subtitle mb-0">
+          <span id="vehiculoNombre">Cargando vehículo…</span>
+          <span class="text-secondary">· ID <span id="vehiculoId">1</span></span>
+        </p>
+      </div>
+      <span class="badge rounded-pill app-badge">CONTROL</span>
+      <button type="button" class="btn-icono" id="btnPantallaCompleta" aria-label="Pantalla completa" title="Pantalla completa">
+        <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="caution-strip" aria-hidden="true"></div>
+  </header>
+
+  <main class="container-xl py-3" id="zonaControl">
+
+    <!-- Aviso para celular en vertical -->
+    <div class="aviso-girar" role="note">
+      <i class="bi bi-phone-landscape" aria-hidden="true"></i>
+      Gira tu teléfono para usar el modo control en horizontal.
+    </div>
+
+    <!-- ===================== INDICADORES ===================== -->
+    <section class="status-panel" aria-label="Estado de conectividad">
+      <div class="status-chip" id="estadoWs" data-estado="desconectado">
+        <i class="bi bi-broadcast-pin" aria-hidden="true"></i>
+        <div>
+          <span class="status-label">WebSocket WSS</span>
+          <span class="status-value" role="status" aria-live="polite">Desconectado</span>
+        </div>
+      </div>
+      <div class="status-chip" id="estadoApi" data-estado="comprobando">
+        <i class="bi bi-cloud-check" aria-hidden="true"></i>
+        <div>
+          <span class="status-label">Servidor AWS · API 21 servicios</span>
+          <span class="status-value" role="status" aria-live="polite">Comprobando</span>
+        </div>
+      </div>
+      <div class="status-chip" id="estadoRds" data-estado="sin-verificar">
+        <i class="bi bi-database" aria-hidden="true"></i>
+        <div>
+          <span class="status-label">Amazon RDS</span>
+          <span class="status-value" role="status" aria-live="polite">Sin verificar</span>
+        </div>
+      </div>
+    </section>
+    <p class="status-note">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      «WebSocket en línea» indica la conexión de este navegador con AWS; no confirma que la excavadora esté conectada.
+    </p>
+
+    <div class="row g-3 zona-control">
+      <!-- ============ COLUMNA IZQUIERDA: clave, joystick, paro de emergencia ============ -->
+      <div class="col-12 col-lg-6">
+
+        <section class="panel mb-3 area-clave" aria-labelledby="tituloClave">
+          <h2 id="tituloClave" class="panel-title"><i class="bi bi-key-fill" aria-hidden="true"></i> Clave de operación</h2>
+          <form id="formClave" class="d-flex gap-2" autocomplete="off">
+            <div class="input-group">
+              <label for="claveInput" class="visually-hidden">Clave de operación (X-API-Key)</label>
+              <input type="password" id="claveInput" class="form-control" placeholder="Clave para habilitar comandos"
+                     autocomplete="off" autocapitalize="off" spellcheck="false">
+              <button type="button" class="btn btn-outline-secondary" id="btnVerClave" aria-label="Mostrar clave" aria-pressed="false">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <button type="submit" class="btn btn-warning fw-semibold px-3" id="btnUsarClave">Usar</button>
+          </form>
+          <p class="small mt-2 mb-0" id="claveEstado">
+            <i class="bi bi-lock-fill" aria-hidden="true"></i> Sin clave: los comandos están bloqueados.
+          </p>
+        </section>
+
+        <section class="panel mb-3 area-joy" aria-labelledby="tituloJoystick">
+          <h2 id="tituloJoystick" class="panel-title"><i class="bi bi-joystick" aria-hidden="true"></i> Desplazamiento</h2>
+          <div class="joystick-wrap">
+            <div class="joystick deshabilitado" id="joystick" tabindex="0" role="application"
+                 aria-label="Joystick. Arrastra hacia arriba para avanzar, abajo para retroceder, a los lados para girar. Suelta para detener. Con teclado usa las flechas y espacio.">
+              <span class="joy-arrow joy-up" data-dir="AVANZAR" aria-hidden="true"><i class="bi bi-caret-up-fill"></i></span>
+              <span class="joy-arrow joy-down" data-dir="RETROCEDER" aria-hidden="true"><i class="bi bi-caret-down-fill"></i></span>
+              <span class="joy-arrow joy-left" data-dir="GIRAR_IZQUIERDA" aria-hidden="true"><i class="bi bi-caret-left-fill"></i></span>
+              <span class="joy-arrow joy-right" data-dir="GIRAR_DERECHA" aria-hidden="true"><i class="bi bi-caret-right-fill"></i></span>
+              <div class="joystick-knob" id="joystickKnob"></div>
+            </div>
+          </div>
+          <p class="joystick-label" id="joystickDireccion" aria-live="polite">Neutral</p>
+          <p class="small text-secondary text-center mb-0 joy-ayuda">Teclado: flechas para mover · espacio o Esc para detener</p>
+        </section>
+
+        <!-- Paro de emergencia + torreta de advertencia -->
+        <section class="estop-zona area-detener" aria-label="Paro de emergencia y estado de la máquina">
+          <div class="torreta" id="torreta" data-estado="reposo">
+            <div class="torreta-domo" aria-hidden="true"><span class="torreta-haz"></span></div>
+            <div class="torreta-base" aria-hidden="true"></div>
+            <span class="torreta-texto" id="torretaTexto" role="status" aria-live="polite">En reposo</span>
+          </div>
+
+          <button type="button" class="estop" id="btnDetener" aria-label="Paro de emergencia: detener la excavadora">
+            <svg class="estop-placa" viewBox="0 0 120 120" aria-hidden="true">
+              <defs><path id="arcoEstop" d="M 14 64 A 46 46 0 0 1 106 64"/></defs>
+              <circle cx="60" cy="60" r="58" fill="#FFC107"/>
+              <circle cx="60" cy="60" r="58" fill="none" stroke="#B88A00" stroke-width="3"/>
+              <text class="estop-leyenda"><textPath href="#arcoEstop" startOffset="50%" text-anchor="middle" textLength="128" lengthAdjust="spacingAndGlyphs">PARO DE EMERGENCIA</textPath></text>
+            </svg>
+            <span class="estop-hongo"><span>STOP</span></span>
+          </button>
+
+          <button type="button" class="btn-icono btn-efectos" id="btnEfectos" aria-pressed="true" aria-label="Silenciar efectos">
+            <i class="bi bi-volume-up-fill" aria-hidden="true"></i>
+          </button>
+        </section>
+      </div>
+
+      <!-- ============ COLUMNA DERECHA: pala/accesorios, DEMO, última acción ============ -->
+      <div class="col-12 col-lg-6">
+
+        <section class="panel mb-3 area-cmd" aria-labelledby="tituloComandos">
+          <h2 id="tituloComandos" class="panel-title"><i class="bi bi-tools" aria-hidden="true"></i> Pala y accesorios</h2>
+          <div class="comandos-grid" id="botonesComandos">
+            <p class="text-secondary small mb-0">Cargando comandos desde la API…</p>
+          </div>
+        </section>
+
+        <section class="panel mb-3 area-demo" aria-labelledby="tituloDemo">
+          <h2 id="tituloDemo" class="panel-title"><i class="bi bi-collection-play-fill" aria-hidden="true"></i> Secuencias DEMO</h2>
+          <label for="demoSelect" class="form-label small text-secondary">DEMO guardada en Amazon RDS</label>
+          <select id="demoSelect" class="form-select mb-2">
+            <option value="">Cargando DEMO…</option>
+          </select>
+          <div class="d-flex gap-2">
+            <button type="button" id="btnIniciarDemo" class="btn btn-warning flex-fill fw-semibold btn-demo" disabled>
+              <i class="bi bi-play-fill" aria-hidden="true"></i> Ejecutar
+            </button>
+            <button type="button" id="btnCancelarDemo" class="btn btn-outline-danger flex-fill fw-semibold btn-demo" disabled>
+              <i class="bi bi-x-octagon" aria-hidden="true"></i> Cancelar
+            </button>
+          </div>
+          <p class="small mt-2 mb-1" id="demoEstado" aria-live="polite">Sin DEMO en ejecución.</p>
+          <div class="progress demo-progress" role="progressbar" aria-label="Avance de la DEMO"
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="demoProgreso">
+            <div class="progress-bar" id="demoBarra" style="width: 0%"></div>
+          </div>
+        </section>
+
+        <section class="panel mb-3 area-accion" aria-labelledby="tituloAccion">
+          <h2 id="tituloAccion" class="panel-title"><i class="bi bi-activity" aria-hidden="true"></i> Última acción</h2>
+          <div class="accion-actual" id="accionNombre">—</div>
+          <ol class="etapas" id="etapas" aria-label="Etapas de la última acción">
+            <li data-etapa="solicitado">Solicitado</li>
+            <li data-etapa="api">Aceptado por API</li>
+            <li data-etapa="evento">Evento WSS</li>
+          </ol>
+          <p class="small text-secondary mb-2 nota-evento">
+            Un evento WSS confirma que AWS publicó la orden; no confirma el movimiento físico.
+          </p>
+          <ul class="registro" id="registroEventos" aria-label="Últimos eventos recibidos"></ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Avisos emergentes -->
+  <div class="toast-zona" id="toastZona" aria-live="assertive"></div>
+
+  <!-- ===================== CRÉDITOS ===================== -->
+  <footer class="app-footer">
+    <div class="container-xl text-center">
+      <p class="mb-1">Desarrollado por <strong>Víctor Manuel Herrera Tapia</strong> · 2026</p>
+      <p class="mb-0 small creditos-extra">Ingeniería en Sistemas Computacionales · TecNM Campus Pachuca · Implementación de Soluciones IoT</p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

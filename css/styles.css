@@ -1,0 +1,419 @@
+/* =====================================================================
+   Excavadora IoT · Control — Estilos (Mobile First)
+   Tema: maquinaria pesada (amarillo + carbón + franjas de precaución)
+   ===================================================================== */
+
+:root {
+  --amarillo: #FFC107;
+  --amarillo-osc: #E0A800;
+  --carbon: #15171B;
+  --panel: #1F2228;
+  --panel-2: #2A2E36;
+  --borde: #343943;
+  --texto: #EDEFF2;
+  --texto-sec: #A9AFB9;
+  --verde: #2ECC71;
+  --rojo: #E5484D;
+  --ambar: #F5A524;
+  --gris: #8A919C;
+  --azul: #4FC3F7;
+  --radio: 16px;
+}
+
+html, body { background: var(--carbon); }
+
+body {
+  font-family: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--texto);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+main { flex: 1 0 auto; }
+.min-w-0 { min-width: 0; }
+
+.skip-link {
+  position: absolute; left: 8px; top: 8px; z-index: 1000;
+  background: var(--amarillo); color: #000; padding: .5rem 1rem; border-radius: 8px;
+}
+
+/* ---------------- Sin barras de desplazamiento visibles ---------------- */
+html, body, .panel, .registro { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar,
+.panel::-webkit-scrollbar, .registro::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* ---------------- Encabezado ---------------- */
+.app-header {
+  background: linear-gradient(180deg, #1E2127, var(--carbon));
+  position: sticky; top: 0; z-index: 50;
+}
+.app-logo { border-radius: 12px; flex-shrink: 0; }
+.app-title {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700;
+  font-size: 1.65rem; letter-spacing: .5px; color: var(--amarillo); line-height: 1;
+}
+.app-subtitle {
+  font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.app-badge {
+  background: var(--amarillo); color: #111;
+  font-family: "Barlow Condensed", sans-serif; letter-spacing: 1px; font-size: .8rem;
+}
+.caution-strip {
+  height: 6px;
+  background: repeating-linear-gradient(-45deg, var(--amarillo) 0 12px, var(--carbon) 12px 24px);
+}
+
+/* Botón de icono (pantalla completa) */
+.btn-icono {
+  width: 42px; height: 42px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px; background: var(--panel-2); color: var(--amarillo);
+  border: 1px solid var(--borde); font-size: 1.1rem;
+}
+.btn-icono:hover { border-color: var(--amarillo); }
+.btn-icono:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+
+/* ---------------- Aviso "gira tu teléfono" ---------------- */
+.aviso-girar { display: none; }
+
+/* ---------------- Indicadores ---------------- */
+.status-panel { display: grid; grid-template-columns: 1fr; gap: .5rem; }
+@media (min-width: 576px) { .status-panel { grid-template-columns: repeat(3, 1fr); } }
+
+.status-chip {
+  display: flex; align-items: center; gap: .75rem;
+  background: var(--panel); border: 1px solid var(--borde);
+  border-left: 6px solid var(--gris); border-radius: 12px; padding: .6rem .8rem;
+}
+.status-chip > i { font-size: 1.45rem; color: var(--gris); }
+.status-chip > div { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.status-label { font-size: .74rem; color: var(--texto-sec); text-transform: uppercase; letter-spacing: .4px; }
+.status-value { font-weight: 700; font-size: 1rem; }
+.status-value::before {
+  content: ""; display: inline-block; width: .6rem; height: .6rem; border-radius: 50%;
+  margin-right: .4rem; background: currentColor; vertical-align: middle;
+}
+
+.status-chip[data-estado="en-linea"],
+.status-chip[data-estado="disponible"] { border-left-color: var(--verde); }
+.status-chip[data-estado="en-linea"] > i,
+.status-chip[data-estado="disponible"] > i,
+.status-chip[data-estado="en-linea"] .status-value,
+.status-chip[data-estado="disponible"] .status-value { color: var(--verde); }
+
+.status-chip[data-estado="conectando"],
+.status-chip[data-estado="comprobando"] { border-left-color: var(--ambar); }
+.status-chip[data-estado="conectando"] > i,
+.status-chip[data-estado="comprobando"] > i,
+.status-chip[data-estado="conectando"] .status-value,
+.status-chip[data-estado="comprobando"] .status-value { color: var(--ambar); }
+.status-chip[data-estado="conectando"] .status-value::before,
+.status-chip[data-estado="comprobando"] .status-value::before { animation: pulso 1s infinite; }
+
+.status-chip[data-estado="desconectado"],
+.status-chip[data-estado="no-disponible"] { border-left-color: var(--rojo); }
+.status-chip[data-estado="desconectado"] > i,
+.status-chip[data-estado="no-disponible"] > i,
+.status-chip[data-estado="desconectado"] .status-value,
+.status-chip[data-estado="no-disponible"] .status-value { color: var(--rojo); }
+
+.status-chip[data-estado="sin-verificar"] .status-value { color: var(--gris); }
+
+.status-note { font-size: .8rem; color: var(--texto-sec); margin: .5rem 0 1rem; }
+
+/* ---------------- Paneles ---------------- */
+.panel {
+  background: var(--panel); border: 1px solid var(--borde);
+  border-radius: var(--radio); padding: 1rem;
+}
+.panel-title {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.15rem;
+  text-transform: uppercase; letter-spacing: .6px; color: var(--amarillo);
+  margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem;
+}
+
+/* ---------------- Joystick ---------------- */
+.joystick-wrap { display: flex; justify-content: center; padding: .5rem 0; }
+
+.joystick {
+  --tam: clamp(210px, 66vw, 270px);
+  width: var(--tam); height: var(--tam);
+  border-radius: 50%; position: relative;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(circle at 50% 50%, #2C3038 0 55%, #23262D 56% 100%);
+  border: 4px solid var(--borde);
+  box-shadow: inset 0 0 0 10px #1A1C21, 0 10px 26px rgba(0, 0, 0, .45);
+  cursor: grab;
+}
+.joystick::after { /* zona neutral */
+  content: ""; position: absolute; inset: 36%; border-radius: 50%;
+  border: 2px dashed rgba(255, 193, 7, .35); pointer-events: none;
+}
+.joystick:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 5px; }
+.joystick.arrastrando { cursor: grabbing; }
+.joystick.deshabilitado { opacity: .45; cursor: not-allowed; }
+
+.joy-arrow {
+  position: absolute; color: var(--texto-sec); font-size: 1.7rem;
+  transition: color .15s, text-shadow .15s; pointer-events: none;
+}
+.joy-up    { top: 5%;    left: 50%; transform: translateX(-50%); }
+.joy-down  { bottom: 5%; left: 50%; transform: translateX(-50%); }
+.joy-left  { left: 5%;   top: 50%;  transform: translateY(-50%); }
+.joy-right { right: 5%;  top: 50%;  transform: translateY(-50%); }
+.joy-arrow.activa { color: var(--amarillo); text-shadow: 0 0 12px rgba(255, 193, 7, .7); }
+
+.joystick-knob {
+  position: absolute; width: 36%; height: 36%; left: 32%; top: 32%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFE08A, var(--amarillo) 45%, var(--amarillo-osc));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .5), inset 0 -4px 0 rgba(0, 0, 0, .2);
+  transition: transform .18s ease-out; z-index: 2; pointer-events: none;
+}
+.joystick.arrastrando .joystick-knob { transition: none; }
+
+.joystick-label {
+  text-align: center; font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.35rem; font-weight: 700; letter-spacing: .5px; margin: .5rem 0 .25rem;
+}
+
+/* ---------------- DETENER ---------------- */
+.btn-detener {
+  width: 100%; min-height: 66px; border: 0; border-radius: var(--radio);
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.7rem; letter-spacing: 3px;
+  color: #fff; background: var(--rojo); position: relative;
+  box-shadow: 0 6px 0 #9E2A2E; margin-bottom: 1rem;
+  transition: transform .05s, box-shadow .05s;
+}
+.btn-detener::before { /* marco de precaución */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 6px;
+  background: repeating-linear-gradient(-45deg, var(--amarillo) 0 10px, #1B1D21 10px 20px);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+}
+.btn-detener:active { transform: translateY(4px); box-shadow: 0 2px 0 #9E2A2E; }
+.btn-detener:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+/* ---------------- Botones de comandos ---------------- */
+.comandos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+@media (min-width: 768px) { .comandos-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.btn-comando {
+  min-height: 76px; border-radius: 14px; background: var(--panel-2);
+  border: 2px solid var(--borde); color: var(--texto);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem;
+  font-weight: 600; font-size: .92rem; line-height: 1.1; padding: .5rem; text-align: center;
+  transition: background .15s, border-color .15s, transform .05s;
+}
+.btn-comando i { font-size: 1.55rem; color: var(--amarillo); }
+.btn-comando small { color: var(--texto-sec); font-weight: 500; font-size: .7rem; }
+.btn-comando:hover:not(:disabled) { border-color: var(--amarillo); }
+.btn-comando:active:not(:disabled) { transform: scale(.97); }
+.btn-comando:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+.btn-comando:disabled { opacity: .45; cursor: not-allowed; }
+.btn-comando.is-enviando { border-color: var(--ambar); }
+.btn-comando.is-aceptado { border-color: var(--verde); background: rgba(46, 204, 113, .12); }
+.btn-comando.is-error { border-color: var(--rojo); background: rgba(229, 72, 77, .12); }
+
+.btn-demo { min-height: 48px; }
+
+/* ---------------- DEMO ---------------- */
+.demo-progress { height: 8px; background: var(--panel-2); }
+.demo-progress .progress-bar { background: var(--amarillo); transition: width .3s; }
+
+/* ---------------- Última acción ---------------- */
+.accion-actual { font-family: "Barlow Condensed", sans-serif; font-size: 1.45rem; font-weight: 700; }
+
+.etapas { list-style: none; padding: 0; margin: .5rem 0; display: flex; gap: .4rem; flex-wrap: wrap; }
+.etapas li {
+  flex: 1 1 30%; min-width: 92px; font-size: .8rem; text-align: center;
+  padding: .45rem .3rem; border-radius: 10px; background: var(--panel-2);
+  color: var(--texto-sec); border: 1px solid var(--borde);
+}
+.etapas li::before { content: "○ "; }
+.etapas li.is-pendiente { color: var(--ambar); border-color: var(--ambar); }
+.etapas li.is-pendiente::before { content: "… "; }
+.etapas li.is-ok { color: var(--verde); border-color: var(--verde); }
+.etapas li.is-ok::before { content: "✓ "; }
+.etapas li.is-error { color: var(--rojo); border-color: var(--rojo); }
+.etapas li.is-error::before { content: "✕ "; }
+
+.registro {
+  list-style: none; padding: 0; margin: 0;
+  font-family: ui-monospace, Consolas, monospace; font-size: .78rem;
+  max-height: 170px; overflow: auto;
+}
+.registro li { padding: .35rem 0; border-top: 1px solid var(--borde); color: var(--texto-sec); word-break: break-word; }
+.registro li strong { color: var(--texto); }
+
+/* ---------------- Avisos ---------------- */
+.toast-zona {
+  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 100;
+  display: flex; flex-direction: column; gap: .5rem; width: min(92vw, 420px); pointer-events: none;
+}
+.aviso {
+  background: var(--panel-2); border-left: 6px solid var(--azul); color: var(--texto);
+  padding: .7rem .9rem; border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+  font-size: .9rem; animation: entrar .2s ease-out;
+}
+.aviso.ok { border-left-color: var(--verde); }
+.aviso.error { border-left-color: var(--rojo); }
+.aviso.alerta { border-left-color: var(--ambar); }
+
+/* ---------------- Pie / créditos ---------------- */
+.app-footer {
+  background: #101215; border-top: 1px solid var(--borde);
+  padding: 1rem 0 calc(1rem + env(safe-area-inset-bottom));
+  color: var(--texto-sec); font-size: .9rem; margin-top: 1rem;
+}
+.app-footer strong { color: var(--amarillo); }
+
+/* ---------------- Animaciones ---------------- */
+@keyframes entrar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pulso { 50% { opacity: .35; } }
+
+/* =====================================================================
+   CELULAR EN VERTICAL: aviso para girar el teléfono
+   ===================================================================== */
+@media (orientation: portrait) and (max-width: 576px) {
+  .aviso-girar {
+    display: flex; align-items: center; gap: .5rem;
+    background: rgba(255, 193, 7, .1); border: 1px dashed var(--amarillo); color: var(--amarillo);
+    border-radius: 10px; padding: .5rem .75rem; font-size: .85rem; margin-bottom: .75rem;
+  }
+  .aviso-girar i { font-size: 1.3rem; }
+}
+
+/* =====================================================================
+   PANTALLA HORIZONTAL (computadora, tableta y celular acostado):
+   todo el control cabe en el alto de la ventana, sin desplazamiento
+   ===================================================================== */
+@media (orientation: landscape) and (min-width: 576px) {
+  body { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+  .app-header { position: static; }
+
+  main {
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+    padding-top: .6rem !important; padding-bottom: .6rem !important;
+  }
+  .status-note { margin: .35rem 0 0; font-size: .75rem; }
+
+  /* Rejilla de 3 columnas tipo control de videojuego */
+  .zona-control {
+    flex: 1 1 auto; min-height: 0; margin: .6rem 0 0 !important;
+    display: grid !important; gap: .75rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "joy cmd   demo"
+      "joy cmd   accion"
+      "det clave accion";
+  }
+  .zona-control > [class*="col-"] { display: contents; }
+  .zona-control .panel,
+  .zona-control .btn-detener { margin: 0 !important; min-height: 0; }
+
+  .area-joy     { grid-area: joy; }
+  .area-cmd     { grid-area: cmd; }
+  .area-demo    { grid-area: demo; }
+  .area-accion  { grid-area: accion; }
+  .area-detener { grid-area: det; align-self: end; }
+  .area-clave   { grid-area: clave; }
+
+  .panel { overflow: auto; }
+
+  /* Joystick centrado y del tamaño que permita la pantalla */
+  .area-joy { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .area-joy .panel-title { align-self: flex-start; }
+  .joystick { --tam: clamp(150px, calc(100dvh - 460px), 24vw); }
+
+  .area-demo label { display: none; }
+  .comandos-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+  .app-footer { margin-top: 0; padding: .4rem 0; }
+  .app-footer p { margin: 0 !important; }
+}
+
+/* =====================================================================
+   CELULAR EN HORIZONTAL (poca altura): versión compacta
+   ===================================================================== */
+@media (orientation: landscape) and (max-height: 520px) {
+  /* Encabezado compacto */
+  .app-header .container-xl { padding-top: .2rem !important; padding-bottom: .2rem !important; gap: .6rem !important; }
+  .app-logo { width: 30px; height: 30px; }
+  .app-title { font-size: 1.1rem; }
+  .app-subtitle { font-size: .7rem; }
+  .app-badge { display: none; }
+  .btn-icono { width: 32px; height: 32px; font-size: .9rem; }
+  .caution-strip { height: 4px; }
+
+  main {
+    padding: .35rem max(.5rem, env(safe-area-inset-right)) .35rem max(.5rem, env(safe-area-inset-left)) !important;
+    max-width: none !important;
+  }
+
+  /* Indicadores en una franja */
+  .status-panel { grid-template-columns: repeat(3, 1fr); gap: .35rem; }
+  .status-chip { padding: .15rem .5rem; border-left-width: 4px; border-radius: 8px; gap: .4rem; }
+  .status-chip > i { font-size: .95rem; }
+  .status-label { font-size: .56rem; }
+  .status-value { font-size: .75rem; }
+  .status-value::before { width: .45rem; height: .45rem; }
+  .status-note { display: none; }
+
+  .zona-control { margin-top: .35rem !important; gap: .35rem; }
+  .panel { padding: .4rem .55rem; border-radius: 12px; }
+  .panel-title { font-size: .78rem; margin-bottom: .3rem; }
+
+  /* Joystick */
+  .area-joy .panel-title, .joy-ayuda { display: none; }
+  .joystick-wrap { padding: 0; }
+  .joystick {
+    --tam: min(52dvh, 27vw); border-width: 3px;
+    box-shadow: inset 0 0 0 7px #1A1C21, 0 6px 16px rgba(0, 0, 0, .45);
+  }
+  .joy-arrow { font-size: 1.15rem; }
+  .joystick-label { font-size: .9rem; margin: .2rem 0 0; }
+
+  /* DETENER */
+  .btn-detener { min-height: 46px; font-size: 1.15rem; letter-spacing: 2px; box-shadow: 0 3px 0 #9E2A2E; }
+  .btn-detener::before { padding: 4px; }
+
+  /* Clave compacta */
+  .area-clave .panel-title { display: none; }
+  .area-clave .form-control,
+  .area-clave .btn { padding-top: .2rem; padding-bottom: .2rem; font-size: .78rem; min-height: 34px; }
+  #claveEstado { font-size: .66rem; margin-top: .15rem !important; }
+
+  /* Botones de pala y accesorios */
+  .comandos-grid { gap: .35rem; }
+  .btn-comando { min-height: 48px; padding: .2rem; font-size: .7rem; border-radius: 10px; gap: 0; }
+  .btn-comando i { font-size: 1.05rem; }
+  .btn-comando small { display: none; }
+
+  /* DEMO compacta */
+  .area-demo .form-select { font-size: .76rem; padding-top: .15rem; padding-bottom: .15rem; margin-bottom: .3rem !important; }
+  .btn-demo { min-height: 32px; font-size: .76rem; padding: .15rem .3rem; }
+  #demoEstado { font-size: .66rem; margin: .2rem 0 !important; }
+  .demo-progress { height: 5px; }
+
+  /* Última acción compacta */
+  .accion-actual { font-size: .95rem; }
+  .etapas { margin: .2rem 0; gap: .25rem; }
+  .etapas li { font-size: .6rem; padding: .15rem; min-width: 0; border-radius: 6px; }
+  .nota-evento { display: none; }
+  .registro { max-height: none; font-size: .62rem; }
+
+  /* Créditos en una sola línea al final */
+  .app-footer { padding: .1rem 0 calc(.1rem + env(safe-area-inset-bottom)); font-size: .64rem; }
+  .creditos-extra { display: none; }
+
+  .toast-zona { bottom: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+.btn-comando.is-presionado { border-color: var(--amarillo); background: rgba(255, 193, 7, .18); transform: scale(.97); }

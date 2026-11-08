@@ -1,0 +1,123 @@
+/* =====================================================================
+   Paro de emergencia industrial + torreta de advertencia
+   ===================================================================== */
+
+.estop-zona {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: .75rem 1rem; margin-bottom: 1rem;
+}
+
+/* ---------------- Botón tipo hongo ---------------- */
+.estop {
+  --tam: 112px;
+  position: relative; width: var(--tam); height: var(--tam); flex-shrink: 0;
+  border: 0; padding: 0; background: none; border-radius: 50%; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.estop-placa { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+.estop-leyenda {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 10.5px;
+  letter-spacing: 1.2px; fill: #1B1D21;
+}
+.estop-hongo {
+  position: absolute; left: 50%; top: 56%; width: 62%; height: 62%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #FF8A8D 0%, #E5484D 38%, #A3191E 100%);
+  box-shadow:
+    0 7px 0 #6E0F12,
+    0 11px 16px rgba(0,0,0,.55),
+    inset 0 -6px 10px rgba(0,0,0,.35),
+    inset 0 4px 6px rgba(255,255,255,.35);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.estop-hongo span {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; color: #fff;
+  font-size: calc(var(--tam) * .17); letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+.estop:hover .estop-hongo { filter: brightness(1.08); }
+.estop:active .estop-hongo,
+.estop.presionado .estop-hongo {
+  transform: translate(-50%, calc(-50% + 6px));
+  box-shadow:
+    0 1px 0 #6E0F12,
+    0 3px 6px rgba(0,0,0,.5),
+    inset 0 -3px 8px rgba(0,0,0,.4),
+    inset 0 3px 5px rgba(255,255,255,.25);
+}
+.estop:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+/* Anillo rojo que parpadea mientras la torreta está en "paro" */
+.estop-zona:has(.torreta[data-estado="paro"]) .estop::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 3px solid var(--rojo); animation: alertaAnillo .5s steps(2) infinite;
+}
+
+/* ---------------- Torreta (baliza) ---------------- */
+.torreta {
+  --luz: #2ECC71; --brillo: rgba(46, 204, 113, .55);
+  display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 84px;
+}
+.torreta-domo {
+  position: relative; width: 46px; height: 40px; overflow: hidden;
+  border-radius: 23px 23px 6px 6px;
+  background: radial-gradient(ellipse at 40% 30%, rgba(255,255,255,.55), transparent 45%), var(--luz);
+  box-shadow: 0 0 18px var(--brillo), 0 0 38px var(--brillo), inset 0 -6px 8px rgba(0,0,0,.25);
+  transition: background .25s, box-shadow .25s;
+}
+.torreta-haz {
+  position: absolute; inset: -40%; opacity: 0;
+  background: conic-gradient(from 0deg, transparent 0 60%, rgba(255,255,255,.75) 72%, transparent 84%);
+}
+.torreta-base {
+  width: 58px; height: 12px; border-radius: 3px;
+  background: linear-gradient(#3A3F48, #23262D); border: 1px solid #4A505B;
+}
+.torreta-texto {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: .85rem;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--luz); text-align: center; line-height: 1.1;
+}
+
+.torreta[data-estado="movimiento"] { --luz: #FFB300; --brillo: rgba(255, 179, 0, .6); }
+.torreta[data-estado="demo"]       { --luz: #4FC3F7; --brillo: rgba(79, 195, 247, .6); }
+.torreta[data-estado="paro"]       { --luz: #E5484D; --brillo: rgba(229, 72, 77, .7); }
+.torreta[data-estado="sin-conexion"] { --luz: #6B7280; --brillo: rgba(0,0,0,0); }
+
+.torreta[data-estado="movimiento"] .torreta-haz,
+.torreta[data-estado="demo"] .torreta-haz { opacity: 1; animation: girarHaz .7s linear infinite; }
+.torreta[data-estado="paro"] .torreta-domo { animation: parpadeo .35s steps(2) infinite; }
+
+/* ---------------- Botón de efectos ---------------- */
+.btn-efectos[aria-pressed="false"] { color: var(--gris); }
+
+/* ---------------- Animaciones ---------------- */
+@keyframes girarHaz { to { transform: rotate(360deg); } }
+@keyframes parpadeo { 50% { filter: brightness(.35); box-shadow: none; } }
+@keyframes alertaAnillo { 50% { opacity: 0; } }
+
+/* ---------------- Pantalla horizontal (escritorio / tableta) ---------------- */
+@media (orientation: landscape) and (min-width: 576px) {
+  .zona-control .estop-zona { margin: 0 !important; }
+  .estop { --tam: clamp(84px, 13vh, 112px); }
+}
+
+/* ---------------- Celular en horizontal: versión compacta ---------------- */
+@media (orientation: landscape) and (max-height: 520px) {
+  .estop-zona { padding: .3rem .5rem; gap: .5rem; border-radius: 12px; }
+  .estop { --tam: 66px; }
+  .estop-leyenda { font-size: 11px; }
+  .torreta { min-width: 58px; gap: .15rem; }
+  .torreta-domo { width: 30px; height: 26px; }
+  .torreta-base { width: 38px; height: 8px; }
+  .torreta-texto { font-size: .62rem; }
+  .btn-efectos { width: 30px; height: 30px; font-size: .85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .torreta-haz, .torreta-domo, .estop::after { animation: none !important; }
+}
+
+/* Botón de pala mantenido */
+.btn-comando.is-presionado { border-color: var(--amarillo); background: rgba(255, 193, 7, .18); transform: scale(.97); }

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Excavadora IoT">
+  <rect width="64" height="64" rx="14" fill="#15171B"/>
+  <!-- Señal IoT -->
+  <path d="M45 13 a7 7 0 0 1 7 7" stroke="#4FC3F7" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M45 6 a14 14 0 0 1 14 14" stroke="#4FC3F7" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="45" cy="20" r="2.5" fill="#4FC3F7"/>
+  <!-- Orugas -->
+  <rect x="8" y="45" width="32" height="10" rx="5" fill="#FFC107"/>
+  <circle cx="14" cy="50" r="2.2" fill="#15171B"/>
+  <circle cx="24" cy="50" r="2.2" fill="#15171B"/>
+  <circle cx="34" cy="50" r="2.2" fill="#15171B"/>
+  <!-- Cabina -->
+  <rect x="12" y="30" width="20" height="14" rx="3" fill="#FFC107"/>
+  <rect x="15" y="33" width="8" height="6" rx="1.2" fill="#15171B"/>
+  <!-- Brazo -->
+  <path d="M30 35 L40 25 L49 33" stroke="#FFC107" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Pala -->
+  <path d="M46 33 h9 l-2.5 9 h-6.5 z" fill="#FFC107"/>
+</svg>

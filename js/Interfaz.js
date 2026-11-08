@@ -85,6 +85,11 @@ export class Interfaz {
     if (clase !== "is-enviando") setTimeout(() => b.classList.remove(clase), 1400);
   }
 
+  limpiarBoton(nombre) {
+    const b = document.querySelector(`.btn-comando[data-comando="${CSS.escape(nombre)}"]`);
+    b?.classList.remove("is-enviando");
+  }
+
   // ---------------- Etapas: solicitado → aceptado por API → evento WSS ----------------
   fijarEtapa(etapa, estado) {
     const li = document.querySelector(`#etapas [data-etapa="${etapa}"]`);

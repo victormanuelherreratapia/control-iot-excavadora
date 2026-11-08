@@ -100,12 +100,18 @@ export class ServicioComandos {
     this.#ui.marcarBoton(nombre, "is-enviando");
     try {
       const r = await this.#api.moverIndividual(cmd.id_comando);
-      if (miSecuencia !== this.#secuencia) return;   // otra orden (o DETENER) la reemplazó
+      if (miSecuencia !== this.#secuencia) {         // otra orden (o DETENER) la reemplazó
+        this.#ui.limpiarBoton(nombre);
+        return;
+      }
       this.#ui.fijarEtapa("api", "ok");
       this.#ui.marcarBoton(nombre, "is-aceptado");
       this.#esperarEvento(miSecuencia, cmd, r?.evento?.timestamp, desde);
     } catch (e) {
-      if (miSecuencia !== this.#secuencia) return;
+      if (miSecuencia !== this.#secuencia) {
+        this.#ui.limpiarBoton(nombre);
+        return;
+      }
       this.#manejarError(e, nombre);
     }
   }

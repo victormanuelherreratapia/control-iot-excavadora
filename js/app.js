@@ -129,13 +129,13 @@ class AplicacionControl {
     document.getElementById("demoSelect").addEventListener("change", () => this.#demo.actualizarBotones());
 
     // Si la pestaña pierde el foco, se suelta lo que esté presionado
-    window.addEventListener("blur", () => this.#terminarMovimiento("pérdida de foco"));
-    document.addEventListener("visibilitychange", () => { if (document.hidden) this.#terminarMovimiento("pestaña oculta"); });
+    window.addEventListener("blur", () => this.#soltarTodo("pérdida de foco"));
+    document.addEventListener("visibilitychange", () => { if (document.hidden) this.#soltarTodo("pestaña oculta"); });
   }
 
   // Movimiento sostenido (joystick o botón): torreta ámbar, clic y, en reversa, pitido
   #iniciarMovimiento(nombre, fuente) {
-    this.#mando.mantener(nombre, fuente);
+    if (!this.#mando.mantener(nombre, fuente)) return;   // otro control ya está presionado
     this.#torreta.mostrar("movimiento");
     this.#efectos.clic();
     this.#efectos.vibrar(15);
@@ -144,10 +144,14 @@ class AplicacionControl {
   }
 
   #terminarMovimiento(fuente) {
+    if (!this.#mando.soltar(fuente)) return;   // no era quien estaba presionando
     this.#efectos.detenerReversa();
-    if (!this.#mando.activo) return;
-    this.#mando.soltar(fuente);
     this.#torreta.volver();
+  }
+
+  #soltarTodo(motivo) {
+    this.#efectos.detenerReversa();
+    if (this.#mando.soltarTodo(motivo)) this.#torreta.volver();
   }
 
   // Paro de emergencia: corta todo, alarma y torreta roja
@@ -187,10 +191,12 @@ class AplicacionControl {
     this.#ui.configurarFormularioClave((valor) => this.#sesion.establecer(valor));
     this.#sesion.alCambiar((hay) => {
       this.#ui.mostrarEstadoClave(hay);
+      document.body.classList.toggle("con-clave", hay);
       if (hay) this.#ui.aviso("Clave cargada. Se valida con el primer comando.", "ok");
       this.#actualizarHabilitacion();
     });
     this.#ui.mostrarEstadoClave(this.#sesion.tieneClave);
+    document.body.classList.toggle("con-clave", this.#sesion.tieneClave);
   }
 
   #claveInvalida() {
@@ -233,8 +239,8 @@ class AplicacionControl {
           this.#efectos.clic();
           this.#efectos.vibrar(15);
         },
-        alPresionar: (nombre) => this.#iniciarMovimiento(nombre, "botón"),
-        alSoltar: () => this.#terminarMovimiento("botón"),
+        alPresionar: (nombre) => this.#iniciarMovimiento(nombre, `botón ${nombre}`),
+        alSoltar: (nombre) => this.#terminarMovimiento(`botón ${nombre}`),
       });
 
       const faltan = [...COMANDOS_JOYSTICK, COMANDO_DETENER].filter((n) => !this.#comandos.existe(n));

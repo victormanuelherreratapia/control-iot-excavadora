@@ -1,0 +1,109 @@
+/* =====================================================================
+   Ajustes táctiles y diseño de CONTROL para celular en horizontal
+   (se carga al final para tener prioridad sobre styles.css y estop.css)
+   ===================================================================== */
+
+/* ---------- Toques limpios: sin selección de texto ni menú al mantener ---------- */
+.btn-comando, .estop, .btn-demo, .btn-icono, .btn-detener, .joystick {
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+.btn-comando, .estop, .joystick { touch-action: none; }      /* el gesto no se convierte en desplazamiento */
+.btn-demo, .btn-icono { touch-action: manipulation; }       /* sin zoom por doble toque */
+.btn-comando * , .estop * { pointer-events: none; }         /* el toque siempre cae en el botón */
+
+/* =====================================================================
+   CELULAR EN HORIZONTAL
+   ===================================================================== */
+@media (orientation: landscape) and (max-height: 520px) {
+
+  /* ---------- Encabezado e indicadores en una sola franja delgada ---------- */
+  .app-header .container-xl { padding-top: .15rem !important; padding-bottom: .15rem !important; }
+  .app-logo { width: 26px !important; height: 26px !important; }
+  .app-title { font-size: 1rem !important; }
+  .app-subtitle { font-size: .66rem !important; }
+  .btn-icono { width: 30px !important; height: 30px !important; font-size: .85rem !important; }
+  .caution-strip { height: 3px !important; }
+
+  main { padding-top: .3rem !important; padding-bottom: .3rem !important; }
+  .status-panel { gap: .3rem !important; }
+  .status-chip { padding: .1rem .45rem !important; border-left-width: 3px !important; border-radius: 7px !important; }
+  .status-chip > i { font-size: .8rem !important; }
+  .status-chip > div { flex-direction: row !important; align-items: baseline; gap: .35rem; white-space: nowrap; overflow: hidden; }
+  .status-label { font-size: .52rem !important; }
+  .status-value { font-size: .68rem !important; }
+  .status-value::before { width: .4rem !important; height: .4rem !important; margin-right: .25rem !important; }
+
+  /* ---------- Rejilla tipo control de videojuego ---------- */
+  /*  Sin clave:  joystick | pala y accesorios | paro / DEMO / clave
+      Con clave:  joystick | pala y accesorios | paro / DEMO / última acción */
+  .zona-control {
+    margin-top: .3rem !important; gap: .3rem !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    grid-template-areas:
+      "joy cmd det"
+      "joy cmd demo"
+      "joy cmd clave" !important;
+  }
+  body.con-clave .zona-control {
+    grid-template-areas:
+      "joy cmd det"
+      "joy cmd demo"
+      "joy cmd accion" !important;
+  }
+  body.con-clave .area-clave { display: none !important; }
+  body:not(.con-clave) .area-accion { display: none !important; }
+
+  .panel { padding: .35rem .45rem !important; border-radius: 10px !important; }
+  .panel-title { font-size: .7rem !important; margin-bottom: .2rem !important; }
+
+  /* ---------- Joystick: ocupa toda la columna ---------- */
+  .area-joy { justify-content: center !important; overflow: hidden !important; }
+  .joystick { --tam: min(calc(100dvh - 145px), 29vw) !important; }
+  .joystick-label { font-size: .8rem !important; margin: .15rem 0 0 !important; }
+
+  /* ---------- Pala y accesorios: botones grandes que llenan el panel ---------- */
+  .area-cmd { display: flex !important; flex-direction: column; overflow: hidden !important; }
+  .comandos-grid {
+    flex: 1 1 auto; min-height: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(44px, 1fr) !important;
+    gap: .3rem !important;
+  }
+  .btn-comando { min-height: 44px !important; font-size: .72rem !important; padding: .15rem !important; }
+  .btn-comando i { font-size: 1.15rem !important; }
+
+  /* ---------- Paro de emergencia ---------- */
+  .area-detener { align-self: stretch !important; }
+  .estop-zona { padding: .25rem .45rem !important; gap: .35rem !important; border-radius: 10px !important; }
+  .estop { --tam: 62px !important; }
+  .torreta { min-width: 52px !important; }
+  .torreta-domo { width: 26px !important; height: 22px !important; }
+  .torreta-base { width: 34px !important; height: 7px !important; }
+  .torreta-texto { font-size: .56rem !important; }
+  .btn-efectos { width: 28px !important; height: 28px !important; }
+
+  /* ---------- DEMO compacta: lista arriba, botones abajo ---------- */
+  .area-demo { overflow: hidden !important; }
+  .area-demo .panel-title { display: none !important; }
+  .area-demo .form-select { font-size: .7rem !important; padding: .1rem 1.6rem .1rem .45rem !important; min-height: 26px; margin-bottom: .25rem !important; }
+  .btn-demo { min-height: 28px !important; font-size: .7rem !important; padding: .1rem .3rem !important; }
+  #demoEstado { font-size: .6rem !important; margin: .15rem 0 .1rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .demo-progress { height: 4px !important; }
+
+  /* ---------- Clave (solo mientras no se ha cargado) ---------- */
+  .area-clave { overflow: hidden !important; }
+  .area-clave .form-control, .area-clave .btn { font-size: .72rem !important; min-height: 30px !important; }
+  #claveEstado { font-size: .6rem !important; }
+
+  /* ---------- Última acción compacta ---------- */
+  .area-accion { overflow: hidden !important; display: flex; flex-direction: column; }
+  .area-accion .panel-title { display: none !important; }
+  .accion-actual { font-size: .8rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .etapas { margin: .15rem 0 !important; gap: .2rem !important; flex-wrap: nowrap !important; }
+  .etapas li { font-size: .55rem !important; padding: .1rem !important; white-space: nowrap; }
+  .registro { flex: 1 1 auto; min-height: 0; font-size: .56rem !important; }
+
+  .app-footer { font-size: .58rem !important; padding: .05rem 0 calc(.05rem + env(safe-area-inset-bottom)) !important; }
+}

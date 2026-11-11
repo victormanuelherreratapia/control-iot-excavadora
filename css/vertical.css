@@ -1,0 +1,158 @@
+/* =====================================================================
+   CELULAR EN VERTICAL: todo el control en una sola pantalla, sin desplazamiento
+   (se carga al final para tener prioridad)
+
+     ┌─────────────────────────────┐
+     │ encabezado + 3 indicadores  │
+     │ PALA Y ACCESORIOS (4 × 2)   │
+     │  JOYSTICK      │ torreta    │
+     │                │ PARO       │
+     │ DEMO  [lista] [▶] [✕]       │
+     │ ÚLTIMA ACCIÓN  (o la clave) │
+     │ créditos                    │
+     └─────────────────────────────┘
+   ===================================================================== */
+@media (orientation: portrait) and (max-width: 600px) {
+
+  body { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+
+  /* ---------- Encabezado compacto ---------- */
+  .app-header { position: static !important; }
+  .app-header .container-xl { padding: .2rem .6rem !important; gap: .5rem !important; }
+  .app-logo { width: 28px !important; height: 28px !important; }
+  .app-title { font-size: 1.05rem !important; }
+  .app-subtitle { font-size: .64rem !important; }
+  .app-badge { display: none !important; }
+  .btn-icono { width: 32px !important; height: 32px !important; font-size: .9rem !important; }
+  .caution-strip { height: 3px !important; }
+
+  /* ---------- Contenedor principal: ocupa exactamente el alto libre ---------- */
+  main {
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+    padding: .3rem .45rem !important; max-width: none !important;
+  }
+  .aviso-girar, .status-note { display: none !important; }
+
+  /* ---------- Indicadores: tres en una fila ---------- */
+  .status-panel { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: .25rem !important; }
+  .status-chip { padding: .15rem .35rem !important; gap: .3rem !important; border-left-width: 3px !important; border-radius: 7px !important; }
+  .status-chip > i { font-size: .8rem !important; }
+  .status-label { font-size: .48rem !important; letter-spacing: .2px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status-value { font-size: .66rem !important; white-space: nowrap; }
+  .status-value::before { width: .38rem !important; height: .38rem !important; margin-right: .2rem !important; }
+
+  /* ---------- Rejilla vertical ---------- */
+  .zona-control {
+    flex: 1 1 auto; min-height: 0;
+    margin: .3rem 0 0 !important;
+    display: grid !important; gap: .3rem !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "cmd   cmd"
+      "joy   det"
+      "demo  demo"
+      "clave clave";
+  }
+  body.con-clave .zona-control {
+    grid-template-areas:
+      "cmd    cmd"
+      "joy    det"
+      "demo   demo"
+      "accion accion";
+  }
+  .zona-control > [class*="col-"] { display: contents !important; }
+  .zona-control .panel, .zona-control .estop-zona { margin: 0 !important; min-height: 0; }
+  body.con-clave .area-clave { display: none !important; }
+  body:not(.con-clave) .area-accion { display: none !important; }
+
+  .area-joy     { grid-area: joy; }
+  .area-cmd     { grid-area: cmd; }
+  .area-demo    { grid-area: demo; }
+  .area-accion  { grid-area: accion; }
+  .area-detener { grid-area: det; }
+  .area-clave   { grid-area: clave; }
+
+  .panel { padding: .3rem .4rem !important; border-radius: 10px !important; overflow: hidden !important; }
+  .panel-title { display: none !important; }
+
+  /* ---------- Pala y accesorios: 4 columnas × 2 filas ---------- */
+  .comandos-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: .25rem !important; }
+  .btn-comando {
+    min-height: 46px !important; padding: .15rem .1rem !important;
+    font-size: .62rem !important; border-radius: 9px !important; gap: 0 !important;
+  }
+  .btn-comando i { font-size: 1.05rem !important; }
+  .btn-comando small { display: none !important; }
+
+  /* ---------- Joystick: tan grande como permita el alto ---------- */
+  .area-joy { display: flex !important; flex-direction: column; align-items: center; justify-content: center; }
+  .joystick-wrap { padding: 0 !important; }
+  .joystick {
+    --tam: min(58vw, calc(100dvh - 395px)) !important;
+    min-width: 130px; min-height: 130px;
+    border-width: 3px !important;
+  }
+  .joy-arrow { font-size: 1.1rem !important; }
+  .joystick-label { font-size: .78rem !important; margin: .1rem 0 0 !important; }
+  .joy-ayuda { display: none !important; }
+
+  /* ---------- Paro de emergencia en columna, junto al joystick ---------- */
+  .estop-zona {
+    flex-direction: column !important; justify-content: space-around !important;
+    gap: .3rem !important; padding: .35rem .3rem !important; border-radius: 10px !important;
+    width: 100px;
+  }
+  .estop { --tam: 80px !important; }
+  .torreta { min-width: 0 !important; gap: .1rem !important; }
+  .torreta-domo { width: 28px !important; height: 24px !important; }
+  .torreta-base { width: 36px !important; height: 7px !important; }
+  .torreta-texto { font-size: .56rem !important; }
+  .btn-efectos { width: 30px !important; height: 30px !important; }
+
+  /* ---------- DEMO en una fila: lista + Ejecutar + Cancelar ---------- */
+  .area-demo {
+    display: grid !important; gap: .2rem .25rem !important;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+  }
+  .area-demo label { display: none !important; }
+  .area-demo .form-select {
+    grid-column: 1; font-size: .7rem !important; min-height: 32px;
+    padding: .15rem 1.5rem .15rem .45rem !important; margin: 0 !important;
+  }
+  .area-demo .d-flex { display: contents !important; }
+  .btn-demo { min-height: 32px !important; font-size: .68rem !important; padding: .1rem .45rem !important; white-space: nowrap; }
+  #demoEstado {
+    grid-column: 1 / -1; font-size: .58rem !important; margin: 0 !important;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .demo-progress { grid-column: 1 / -1; height: 3px !important; }
+
+  /* ---------- Última acción: solo lo esencial ---------- */
+  .accion-actual { font-size: .78rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .etapas { margin: .15rem 0 0 !important; gap: .2rem !important; flex-wrap: nowrap !important; }
+  .etapas li { min-width: 0 !important; font-size: .56rem !important; padding: .12rem .1rem !important; border-radius: 6px !important; white-space: nowrap; }
+  .nota-evento { display: none !important; }
+  .registro { max-height: 2.6em !important; font-size: .54rem !important; margin-top: .15rem !important; overflow: hidden !important; }
+  .registro li { padding: .1rem 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---------- Clave (solo mientras no se ha cargado) ---------- */
+  .area-clave .form-control, .area-clave .btn { font-size: .72rem !important; min-height: 32px !important; padding-top: .15rem !important; padding-bottom: .15rem !important; }
+  #claveEstado { font-size: .58rem !important; margin-top: .15rem !important; }
+
+  /* ---------- Créditos en una línea ---------- */
+  .app-footer { margin-top: 0 !important; padding: .1rem 0 calc(.1rem + env(safe-area-inset-bottom)) !important; font-size: .58rem !important; }
+  .app-footer p { margin: 0 !important; }
+  .creditos-extra { display: none !important; }
+
+  .toast-zona { bottom: 8px; }
+}
+
+/* Celulares muy bajos (p. ej. con barra del navegador grande): todo un poco más compacto */
+@media (orientation: portrait) and (max-width: 600px) and (max-height: 600px) {
+  .btn-comando { min-height: 40px !important; }
+  .estop { --tam: 66px !important; }
+  .estop-zona { width: 86px; }
+  .registro { display: none !important; }
+}

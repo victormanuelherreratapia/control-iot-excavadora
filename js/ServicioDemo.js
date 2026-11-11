@@ -7,7 +7,6 @@ import { CONFIG, etiquetaComando } from "./config.js";
 
 export class ServicioDemo {
   #api;
-  #sesion;
   #ui;
   #enCurso = false;
   #iniciando = false;
@@ -15,17 +14,16 @@ export class ServicioDemo {
   #total = null;
   #vigilante = null;
   #alCambiar = () => {};
-  #alClaveInvalida = () => {};
+  #alRechazo = () => {};
 
-  constructor({ api, sesion, ui }) {
+  constructor({ api, ui }) {
     this.#api = api;
-    this.#sesion = sesion;
     this.#ui = ui;
   }
 
-  configurar({ alCambiarEstado, alClaveInvalida }) {
+  configurar({ alCambiarEstado, alRechazo }) {
     this.#alCambiar = alCambiarEstado;
-    this.#alClaveInvalida = alClaveInvalida;
+    this.#alRechazo = alRechazo;
   }
 
   get activa() { return this.#enCurso || this.#iniciando; }
@@ -33,9 +31,9 @@ export class ServicioDemo {
   actualizarBotones() {
     const sel = document.getElementById("demoSelect");
     document.getElementById("btnIniciarDemo").disabled =
-      this.activa || !this.#sesion.tieneClave || !sel.value || sel.disabled;
+      this.activa || !sel.value || sel.disabled;
     document.getElementById("btnCancelarDemo").disabled =
-      !this.activa || !this.#sesion.tieneClave || this.#cancelando;
+      !this.activa || this.#cancelando;
   }
 
   async cargar() {
@@ -67,7 +65,6 @@ export class ServicioDemo {
 
   async iniciar() {
     if (this.activa) { this.#ui.aviso("Ya hay una DEMO en ejecución.", "alerta"); return; }
-    if (!this.#sesion.tieneClave) { this.#ui.aviso("Escribe la clave de operación.", "alerta"); return; }
     const sel = document.getElementById("demoSelect");
     const idDemo = Number(sel.value);
     if (!idDemo) { this.#ui.aviso("Selecciona una DEMO.", "alerta"); return; }
@@ -97,7 +94,7 @@ export class ServicioDemo {
       } else {
         this.#ui.textoDemo("No se pudo iniciar la DEMO.");
         this.#ui.aviso(e.message, "error");
-        if (e.status === 401) this.#alClaveInvalida();
+        if (e.status === 401) this.#alRechazo();
       }
     } finally {
       this.#iniciando = false;
@@ -106,7 +103,6 @@ export class ServicioDemo {
   }
 
   async cancelar() {
-    if (!this.#sesion.tieneClave) { this.#ui.aviso("Escribe la clave de operación.", "alerta"); return; }
     this.#cancelando = true;
     this.actualizarBotones();
     try {
@@ -115,7 +111,7 @@ export class ServicioDemo {
       this.#ui.aviso("Cancelación enviada.", "ok");
     } catch (e) {
       this.#ui.aviso(e.message, "error");
-      if (e.status === 401) this.#alClaveInvalida();
+      if (e.status === 401) this.#alRechazo();
       if (e.status === 404 || e.status === 409) this.#terminar("No había una DEMO en ejecución en el servidor.", 0);
       throw e;
     } finally {

@@ -2,7 +2,6 @@
 // Punto de entrada: clase AplicacionControl (coordina todos los objetos)
 //
 //   AplicacionControl
-//     ├─ SesionOperador     (clave de operación en la pestaña)
 //     ├─ ClienteApi         (REST: Fetch + async/await)
 //     ├─ ClienteWS          (WebSocket WSS del navegador)
 //     ├─ PanelEstado        (indicadores WSS / API AWS / RDS)
@@ -15,7 +14,6 @@
 //     └─ Efectos            (pitidos, alarma y vibración)
 // =====================================================================
 import { CONFIG, COMANDOS_JOYSTICK, COMANDO_DETENER, COMANDOS_PULSO } from "./config.js";
-import { SesionOperador } from "./SesionOperador.js";
 import { ClienteApi } from "./ClienteApi.js";
 import { ClienteWS } from "./ClienteWS.js";
 import { PanelEstado } from "./PanelEstado.js";
@@ -28,12 +26,11 @@ import { Torreta } from "./Torreta.js";
 import { Efectos } from "./Efectos.js";
 
 class AplicacionControl {
-  #sesion = new SesionOperador();
   #ui = new Interfaz();
-  #api = new ClienteApi({ baseUrl: CONFIG.API_BASE_URL, idVehiculo: CONFIG.VEHICULO_ID, sesion: this.#sesion });
+  #api = new ClienteApi({ baseUrl: CONFIG.API_BASE_URL, idVehiculo: CONFIG.VEHICULO_ID });
   #panel = new PanelEstado(this.#api);
-  #comandos = new ServicioComandos({ api: this.#api, sesion: this.#sesion, ui: this.#ui });
-  #demo = new ServicioDemo({ api: this.#api, sesion: this.#sesion, ui: this.#ui });
+  #comandos = new ServicioComandos({ api: this.#api, ui: this.#ui });
+  #demo = new ServicioDemo({ api: this.#api, ui: this.#ui });
   #mando = new ControlContinuo({
     solicitar: (nombre, fuente) => this.#comandos.solicitar(nombre, fuente),
     detener: (fuente) => this.#comandos.solicitar(COMANDO_DETENER, fuente),
@@ -52,7 +49,6 @@ class AplicacionControl {
     this.#crearJoystick();
     this.#configurarServicios();
     this.#conectarControles();
-    this.#configurarClave();
     this.#configurarEfectos();
     this.#ui.configurarPantallaCompleta();
     this.#cargarDatos();
@@ -94,9 +90,7 @@ class AplicacionControl {
         },
         onDetener: () => this.#detenerTodo("teclado"),
         onBloqueado: () => this.#ui.aviso(
-          !this.#sesion.tieneClave ? "Escribe la clave de operación para usar el joystick."
-            : this.#demo.activa ? "Control bloqueado mientras se ejecuta una DEMO."
-            : "Cargando catálogo de comandos…",
+          this.#demo.activa ? "Control bloqueado mientras se ejecuta una DEMO." : "Cargando catálogo de comandos…",
           "alerta"),
       },
     );
@@ -107,11 +101,11 @@ class AplicacionControl {
     this.#comandos.configurar({
       estaDemoActiva: () => this.#demo.activa,
       cancelarDemo: () => this.#demo.cancelar(),
-      alClaveInvalida: () => this.#claveInvalida(),
+      alRechazo: () => this.#ordenRechazada(),
     });
     this.#demo.configurar({
       alCambiarEstado: () => this.#actualizarHabilitacion(),
-      alClaveInvalida: () => this.#claveInvalida(),
+      alRechazo: () => this.#ordenRechazada(),
     });
   }
 
@@ -186,27 +180,15 @@ class AplicacionControl {
     pintar();
   }
 
-  // ---------------- Clave de operación ----------------
-  #configurarClave() {
-    this.#ui.configurarFormularioClave((valor) => this.#sesion.establecer(valor));
-    this.#sesion.alCambiar((hay) => {
-      this.#ui.mostrarEstadoClave(hay);
-      document.body.classList.toggle("con-clave", hay);
-      if (hay) this.#ui.aviso("Clave cargada. Se valida con el primer comando.", "ok");
-      this.#actualizarHabilitacion();
-    });
-    this.#ui.mostrarEstadoClave(this.#sesion.tieneClave);
-    document.body.classList.toggle("con-clave", this.#sesion.tieneClave);
-  }
-
-  #claveInvalida() {
+  // La API rechazó una orden de control (no debería ocurrir: esas rutas son públicas)
+  #ordenRechazada() {
     this.#mando.cancelar();
-    this.#sesion.borrar();
-    this.#ui.aviso("La API rechazó la clave (401). Escríbela de nuevo.", "error", 5000);
+    this.#efectos.detenerReversa();
+    this.#torreta.volver();
   }
 
   #actualizarHabilitacion() {
-    const libre = this.#catalogoListo && this.#sesion.tieneClave && !this.#demo.activa;
+    const libre = this.#catalogoListo && !this.#demo.activa;
     if (!libre) {
       this.#mando.cancelar();
       this.#efectos.detenerReversa();

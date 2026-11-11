@@ -1,6 +1,6 @@
 // =====================================================================
 // Clase Interfaz: avisos, botones, etapas de la acción, registro,
-// formulario de clave y pantalla completa.
+// DEMO y pantalla completa.
 // Todo texto remoto se inserta con textContent (sin inyección en el DOM).
 // =====================================================================
 import { CATALOGO_UI, etiquetaComando } from "./config.js";
@@ -134,43 +134,6 @@ export class Interfaz {
     li.append(titulo, document.createTextNode(` · veh ${evt.id_vehiculo ?? "?"} · ${detalle}`));
     lista.prepend(li);
     while (lista.children.length > 12) lista.lastElementChild.remove();
-  }
-
-  // ---------------- Clave de operación ----------------
-  configurarFormularioClave(alUsar) {
-    const input = this.#$("claveInput");
-    const ver = this.#$("btnVerClave");
-
-    ver.addEventListener("click", () => {
-      const mostrar = input.type === "password";
-      input.type = mostrar ? "text" : "password";
-      ver.setAttribute("aria-pressed", String(mostrar));
-      ver.setAttribute("aria-label", mostrar ? "Ocultar clave" : "Mostrar clave");
-      ver.querySelector("i").className = mostrar ? "bi bi-eye-slash" : "bi bi-eye";
-    });
-
-    this.#$("formClave").addEventListener("submit", (e) => {
-      e.preventDefault();
-      alUsar(input.value);
-      input.value = "";
-      input.type = "password";
-      ver.querySelector("i").className = "bi bi-eye";
-      ver.setAttribute("aria-pressed", "false");
-    });
-  }
-
-  mostrarEstadoClave(hay) {
-    const p = this.#$("claveEstado");
-    p.replaceChildren();
-    const i = document.createElement("i");
-    i.setAttribute("aria-hidden", "true");
-    if (hay) {
-      i.className = "bi bi-unlock-fill text-success";
-      p.append(i, document.createTextNode(" Clave cargada en esta pestaña. Para quitarla, envía el campo vacío."));
-    } else {
-      i.className = "bi bi-lock-fill";
-      p.append(i, document.createTextNode(" Sin clave: los comandos están bloqueados."));
-    }
   }
 
   // ---------------- DEMO ----------------

@@ -17,13 +17,11 @@ export class ApiError extends Error {
 export class ClienteApi {
   #baseUrl;
   #idVehiculo;
-  #sesion;
 
-  /** @param {{ baseUrl: string, idVehiculo: number, sesion: import("./SesionOperador.js").SesionOperador }} op */
-  constructor({ baseUrl, idVehiculo, sesion }) {
+  /** @param {{ baseUrl: string, idVehiculo: number }} op */
+  constructor({ baseUrl, idVehiculo }) {
     this.#baseUrl = baseUrl;
     this.#idVehiculo = idVehiculo;
-    this.#sesion = sesion;
   }
 
   // ---------------- Consultas (GET) ----------------
@@ -34,35 +32,29 @@ export class ClienteApi {
   /** GET existente que ejecuta sp_obtener_estado en RDS (sirve como diagnóstico indirecto). */
   estado()   { return this.#solicitar(ENDPOINTS.estado(this.#idVehiculo), { timeoutMs: CONFIG.TIMEOUT_SALUD_MS }); }
 
-  // ---------------- Acciones (POST con X-API-Key) ----------------
+  // ---------------- Acciones de control (POST públicos de la API) ----------------
   moverIndividual(idComando) {
     return this.#solicitar(ENDPOINTS.movimiento(), {
-      metodo: "POST", conClave: true,
+      metodo: "POST",
       cuerpo: { id_vehiculo: this.#idVehiculo, id_comando: idComando, origen: CONFIG.ORIGEN },
     });
   }
 
   iniciarDemo(idDemo) {
     return this.#solicitar(ENDPOINTS.iniciarDemo(this.#idVehiculo, idDemo), {
-      metodo: "POST", conClave: true,
+      metodo: "POST",
       cuerpo: { id_vehiculo: this.#idVehiculo, id_comando: 0, origen: CONFIG.ORIGEN },
     });
   }
 
   cancelarDemo() {
-    return this.#solicitar(ENDPOINTS.cancelarDemo(this.#idVehiculo), { metodo: "POST", conClave: true });
+    return this.#solicitar(ENDPOINTS.cancelarDemo(this.#idVehiculo), { metodo: "POST" });
   }
 
   // ---------------- Núcleo HTTP ----------------
-  async #solicitar(ruta, { metodo = "GET", cuerpo, conClave = false, timeoutMs = CONFIG.TIMEOUT_MS } = {}) {
+  async #solicitar(ruta, { metodo = "GET", cuerpo, timeoutMs = CONFIG.TIMEOUT_MS } = {}) {
     const headers = { Accept: "application/json" };
     if (cuerpo !== undefined) headers["Content-Type"] = "application/json";
-    if (conClave) {
-      if (!this.#sesion.tieneClave) {
-        throw new ApiError("Escribe la clave de operación para enviar comandos.", { tipo: "sin-clave" });
-      }
-      headers["X-API-Key"] = this.#sesion.clave;
-    }
 
     const controlador = new AbortController();
     const temporizador = setTimeout(() => controlador.abort(), timeoutMs);
@@ -100,7 +92,7 @@ export class ClienteApi {
 
   static #mensajeHttp(status, datos) {
     const detalle = datos && typeof datos === "object" && typeof datos.detail === "string" ? datos.detail : "";
-    if (status === 401) return "La API rechazó la clave de operación (401).";
+    if (status === 401) return "La API rechazó la orden (401): la ruta de control sigue protegida en el servidor.";
     if (status === 404) return detalle || "Recurso no encontrado (404).";
     if (status === 409) return detalle || "Operación en conflicto (409).";
     if (status === 422) return "La API no aceptó los datos enviados (422).";

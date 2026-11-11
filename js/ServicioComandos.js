@@ -10,7 +10,6 @@ import { CONFIG, COMANDO_DETENER, etiquetaComando } from "./config.js";
 
 export class ServicioComandos {
   #api;
-  #sesion;
   #ui;
   #catalogo = new Map();
   #recientes = [];        // últimos eventos MOVIMIENTO_INDIVIDUAL recibidos
@@ -21,18 +20,17 @@ export class ServicioComandos {
 
   #demoActiva = () => false;
   #cancelarDemo = async () => {};
-  #alClaveInvalida = () => {};
+  #alRechazo = () => {};
 
-  constructor({ api, sesion, ui }) {
+  constructor({ api, ui }) {
     this.#api = api;
-    this.#sesion = sesion;
     this.#ui = ui;
   }
 
-  configurar({ estaDemoActiva, cancelarDemo, alClaveInvalida }) {
+  configurar({ estaDemoActiva, cancelarDemo, alRechazo }) {
     this.#demoActiva = estaDemoActiva;
     this.#cancelarDemo = cancelarDemo;
-    this.#alClaveInvalida = alClaveInvalida;
+    this.#alRechazo = alRechazo;
   }
 
   cargarCatalogo(lista) {
@@ -49,10 +47,6 @@ export class ServicioComandos {
   async solicitar(nombre, fuente = "botón") {
     if (!this.#catalogo.has(nombre)) {
       this.#ui.aviso(`El comando ${nombre} no está en el catálogo del vehículo.`, "error");
-      return;
-    }
-    if (!this.#sesion.tieneClave) {
-      this.#ui.aviso("Escribe la clave de operación para enviar comandos.", "alerta");
       return;
     }
     if (nombre === COMANDO_DETENER) {
@@ -154,7 +148,7 @@ export class ServicioComandos {
     this.#ui.fijarEtapa("api", "error");
     this.#ui.marcarBoton(nombre, "is-error");
     this.#ui.aviso(e.message, "error");
-    if (e.status === 401) this.#alClaveInvalida();
+    if (e.status === 401) this.#alRechazo();
   }
 
   // ---------------- Correlación con el evento WSS ----------------

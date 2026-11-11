@@ -12,6 +12,16 @@
 .btn-demo, .btn-icono { touch-action: manipulation; }       /* sin zoom por doble toque */
 .btn-comando * , .estop * { pointer-events: none; }         /* el toque siempre cae en el botón */
 
+/* ---------- Computadora / tableta en horizontal: sin panel de clave ---------- */
+@media (orientation: landscape) and (min-width: 576px) {
+  .zona-control {
+    grid-template-areas:
+      "joy cmd demo"
+      "joy cmd accion"
+      "det cmd accion";
+  }
+}
+
 /* =====================================================================
    CELULAR EN HORIZONTAL
    ===================================================================== */

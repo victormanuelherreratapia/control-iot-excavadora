@@ -22,7 +22,7 @@
   <link href="css/movil.css" rel="stylesheet">
   <link href="css/vertical.css" rel="stylesheet">
 </head>
-<body>
+<body class="con-clave">
   <a class="visually-hidden-focusable skip-link" href="#zonaControl">Saltar al control</a>
 
   <!-- ===================== ENCABEZADO ===================== -->
@@ -82,26 +82,8 @@
     </p>
 
     <div class="row g-3 zona-control">
-      <!-- ============ COLUMNA IZQUIERDA: clave, joystick, paro de emergencia ============ -->
+      <!-- ============ COLUMNA IZQUIERDA: joystick y paro de emergencia ============ -->
       <div class="col-12 col-lg-6">
-
-        <section class="panel mb-3 area-clave" aria-labelledby="tituloClave">
-          <h2 id="tituloClave" class="panel-title"><i class="bi bi-key-fill" aria-hidden="true"></i> Clave de operación</h2>
-          <form id="formClave" class="d-flex gap-2" autocomplete="off">
-            <div class="input-group">
-              <label for="claveInput" class="visually-hidden">Clave de operación (X-API-Key)</label>
-              <input type="password" id="claveInput" class="form-control" placeholder="Clave para habilitar comandos"
-                     autocomplete="off" autocapitalize="off" spellcheck="false">
-              <button type="button" class="btn btn-outline-secondary" id="btnVerClave" aria-label="Mostrar clave" aria-pressed="false">
-                <i class="bi bi-eye" aria-hidden="true"></i>
-              </button>
-            </div>
-            <button type="submit" class="btn btn-warning fw-semibold px-3" id="btnUsarClave">Usar</button>
-          </form>
-          <p class="small mt-2 mb-0" id="claveEstado">
-            <i class="bi bi-lock-fill" aria-hidden="true"></i> Sin clave: los comandos están bloqueados.
-          </p>
-        </section>
 
         <section class="panel mb-3 area-joy" aria-labelledby="tituloJoystick">
           <h2 id="tituloJoystick" class="panel-title"><i class="bi bi-joystick" aria-hidden="true"></i> Desplazamiento</h2>

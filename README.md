@@ -1,51 +1,71 @@
-# Excavadora IoT · Aplicación de Control
+# Excavadora IoT · Control y Monitoreo
 
-Aplicación web responsiva (Mobile First) para controlar una excavadora IoT mediante joystick virtual, botones táctiles, paro de emergencia y secuencias DEMO, consumiendo la API REST y el WebSocket (WSS) desplegados en AWS.
+Aplicación web responsiva (Mobile First) para **controlar** una excavadora IoT (joystick virtual, botones táctiles, paro de emergencia y DEMO) y **monitorear** en tiempo real sus últimos movimientos, consumiendo la API REST y el WebSocket (WSS) desplegados en AWS con Amazon RDS.
 
 **Autor:** Víctor Manuel Herrera Tapia · TecNM Campus Pachuca · Implementación de Soluciones IoT · 2026
 
 **Sitio publicado:** https://victormanuelherreratapia.github.io/control-iot-excavadora/
+**Monitoreo directo:** https://victormanuelherreratapia.github.io/control-iot-excavadora/#monitoreo
 
 ## Tecnologías
 HTML5 · CSS3 · Bootstrap 5 · JavaScript ES6+ (módulos nativos y POO) · Fetch API + async/await · WebSocket nativo · GitHub Pages
 
-## Estructura
+## Vistas
+| Vista | Contenido |
+|---|---|
+| **CONTROL** (práctica 4.1) | Joystick, botones, mantener presionado, paro de emergencia con torreta y DEMO |
+| **MONITOREO** (práctica 4.2) | Tarjeta del último movimiento con fecha y hora reales, y tabla de los últimos 10 movimientos individuales |
 
+Ambas vistas están en la misma página y comparten **una sola conexión WSS**. Los 3 indicadores (WebSocket, API AWS y Amazon RDS) se ven en las dos.
+
+## Funcionamiento del monitoreo (4.2)
+- **Carga inicial por REST:** `GET /estado` (último movimiento) y `GET /historial` (10 movimientos).
+- **Tiempo real por WSS:** un `MOVIMIENTO_INDIVIDUAL` actualiza la tarjeta al instante y pide de nuevo el historial a RDS (las ráfagas se agrupan en una sola consulta).
+- **DEMO:** sus pasos (`DEMO_MOVIMIENTO`) se muestran en la tarjeta, pero **no** en la tabla, porque no se guardan como movimientos individuales.
+- **Resincronización:** al reconectar el WSS, al volver a la vista MONITOREO, al regresar a la pestaña del navegador o con el botón *Actualizar*.
+- **Reglas de datos:** solo el vehículo 1, sin duplicados (`id_historial`), del más nuevo al más antiguo, máximo 10; un dato más viejo nunca reemplaza a uno más nuevo.
+- **Hora:** RDS guarda en UTC; la página la muestra en hora de México (America/Mexico_City).
+
+## Estructura
 | Archivo | Responsabilidad |
 |---|---|
-| `index.html` | Página principal |
-| `css/styles.css` | Estilos y diseño responsivo |
+| `index.html` | Página principal (pestañas CONTROL / MONITOREO) |
+| `css/styles.css` | Estilos base y diseño responsivo |
 | `css/estop.css` | Paro de emergencia y torreta |
+| `css/movil.css` · `css/vertical.css` | Celular horizontal y vertical |
+| `css/monitoreo.css` | Pestañas, tarjeta y tabla de monitoreo |
 | `assets/favicon.svg` | Favicon propio |
 | `js/app.js` | `AplicacionControl`: crea y coordina los objetos |
 | `js/config.js` | URL de la API, WSS y catálogo visual (sin secretos) |
-| `js/SesionOperador.js` | Clave de operación (solo en la pestaña) |
 | `js/ClienteApi.js` | Cliente REST (Fetch, tiempo límite y errores) |
-| `js/ClienteWS.js` | WebSocket WSS con reconexión |
+| `js/ClienteWS.js` | WebSocket WSS único con reconexión |
 | `js/PanelEstado.js` | Indicadores WSS / API AWS / Amazon RDS |
 | `js/Interfaz.js` | Botones, avisos, etapas y registro |
-| `js/ServicioComandos.js` | Envío único de comandos y prioridad de DETENER |
+| `js/ServicioComandos.js` | Envío de comandos y prioridad de DETENER |
 | `js/ServicioDemo.js` | Cargar, iniciar y cancelar DEMO |
 | `js/ControlContinuo.js` | Mantener presionado |
 | `js/Joystick.js` | Joystick táctil, con mouse y con teclado |
-| `js/Torreta.js` | Baliza de estado |
-| `js/Efectos.js` | Pitido de reversa, alarma y vibración |
+| `js/Torreta.js` · `js/Efectos.js` | Baliza, sonidos y vibración |
+| `js/Navegacion.js` | Pestañas CONTROL / MONITOREO |
+| `js/ServicioMonitoreo.js` | Lógica del monitoreo (REST + WSS) |
+| `js/VistaMonitoreo.js` | Tarjeta y tabla en el DOM |
+| `js/FechaHora.js` | Conversión UTC → hora de México |
 
 ## Integración con la API (AWS)
-
 | Uso | Método y ruta |
 |---|---|
 | Disponibilidad de la API | `GET /` |
 | Vehículo | `GET /api/v1/vehiculos/{id}` |
 | Comandos | `GET /api/v1/vehiculos/{id}/comandos` |
-| Diagnóstico indirecto de RDS | `GET /api/v1/vehiculos/{id}/estado` |
+| Último movimiento / diagnóstico de RDS | `GET /api/v1/vehiculos/{id}/estado` |
+| **Últimos 10 movimientos** | `GET /api/v1/vehiculos/{id}/historial` |
 | DEMO | `GET /api/v1/vehiculos/{id}/demos` |
 | Movimiento | `POST /api/v1/movimientos/individual` |
 | Iniciar DEMO | `POST /api/v1/vehiculos/{id}/demos/{id_demo}/iniciar` |
 | Cancelar DEMO | `POST /api/v1/vehiculos/{id}/demos/cancelar` |
 | Eventos en tiempo real | `WSS /ws/vehiculo/{id}` |
 
-Los POST requieren la cabecera `X-API-Key`. La clave **no** está en el código: el operador la escribe en la página y se guarda solo en la pestaña (sessionStorage).
+Las rutas de control y las consultas son públicas; las rutas de administración siguen protegidas con `X-API-Key` en el backend.
 
 ## Ejecución local
 Abrir la carpeta en VS Code y usar **Live Server** (`http://127.0.0.1:5500`). No abrir `index.html` con doble clic (`file://`).

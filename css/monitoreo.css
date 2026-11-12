@@ -1,0 +1,156 @@
+/* =====================================================================
+   Navegación CONTROL / MONITOREO y vista de MONITOREO (práctica 4.2)
+   Se carga al final para tener prioridad.
+   ===================================================================== */
+
+/* ---------------- Pestañas en el encabezado ---------------- */
+.vistas {
+  display: flex; gap: .25rem; padding: .2rem; flex-shrink: 0;
+  background: var(--panel); border: 1px solid var(--borde); border-radius: 999px;
+}
+.vista-tab {
+  display: inline-flex; align-items: center; gap: .35rem;
+  border: 0; border-radius: 999px; padding: .35rem .85rem; min-height: 36px;
+  background: transparent; color: var(--texto-sec);
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: .95rem;
+  letter-spacing: .5px; text-transform: uppercase;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation;
+}
+.vista-tab i { font-size: 1rem; }
+.vista-tab:hover { color: var(--texto); }
+.vista-tab.activa { background: var(--amarillo); color: #111; }
+.vista-tab:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+.app-badge { display: none !important; }      /* las pestañas reemplazan la etiqueta CONTROL */
+
+/* ---------------- Cambio de vista ---------------- */
+body.vista-monitoreo .zona-control,
+body.vista-monitoreo .status-note { display: none !important; }
+.monitoreo[hidden] { display: none !important; }
+
+/* ---------------- Vista MONITOREO ---------------- */
+.monitoreo {
+  display: grid; gap: .75rem; margin-top: .75rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .monitoreo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: start; }
+}
+.monitoreo .panel { margin: 0; }
+.monitoreo-nota { font-size: .75rem; color: var(--texto-sec); margin: .6rem 0 0; }
+
+/* Tarjeta del último movimiento */
+.ultimo-tarjeta {
+  display: flex; gap: .9rem; align-items: center;
+  background: var(--panel-2); border: 1px solid var(--borde); border-left: 6px solid var(--verde);
+  border-radius: 14px; padding: .9rem 1rem;
+}
+.ultimo-tarjeta[data-origen="demo"] { border-left-color: var(--azul); }
+.ultimo-tarjeta[data-origen="rds"]  { border-left-color: var(--amarillo); }
+.ultimo-tarjeta.sin-datos { border-left-color: var(--gris); }
+.ultimo-icono {
+  width: 64px; height: 64px; flex-shrink: 0; border-radius: 16px;
+  display: grid; place-items: center; font-size: 2rem;
+  background: rgba(46, 204, 113, .14); color: var(--verde);
+}
+.ultimo-tarjeta[data-origen="demo"] .ultimo-icono { background: rgba(79, 195, 247, .14); color: var(--azul); }
+.ultimo-tarjeta[data-origen="rds"]  .ultimo-icono { background: rgba(255, 193, 7, .14); color: var(--amarillo); }
+.ultimo-tarjeta.sin-datos .ultimo-icono { background: var(--panel); color: var(--gris); }
+.ultimo-datos { min-width: 0; flex: 1; }
+.ultimo-datos p { margin: 0; }
+.ultimo-nombre {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.8rem; line-height: 1.05;
+}
+.ultimo-comando { font-family: ui-monospace, Consolas, monospace; font-size: .78rem; color: var(--texto-sec); }
+.ultimo-fecha { display: flex; gap: 1.2rem; margin: .35rem 0 .2rem; }
+.ultimo-fecha div { display: flex; flex-direction: column; }
+.ultimo-fecha dt { font-size: .65rem; text-transform: uppercase; letter-spacing: .5px; color: var(--texto-sec); font-weight: 500; }
+.ultimo-fecha dd { margin: 0; font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.ultimo-origen { font-size: .75rem; color: var(--texto-sec); }
+.ultimo-detalle { font-size: .75rem; color: var(--azul); }
+.ultimo-aviso:empty { display: none; }
+.ultimo-aviso {
+  margin: .5rem 0 0; font-size: .78rem; color: var(--ambar);
+  border: 1px dashed var(--ambar); border-radius: 8px; padding: .35rem .55rem;
+}
+.ultimo-tarjeta.destello { animation: destello .9s ease-out; }
+
+/* Tabla de historial */
+.historial-cabecera { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.historial-estado { font-size: .75rem; margin: .35rem 0 .5rem; color: var(--texto-sec); }
+.historial-estado::before { content: "● "; }
+.historial-estado[data-tipo="ok"]        { color: var(--verde); }
+.historial-estado[data-tipo="pendiente"] { color: var(--ambar); }
+.historial-estado[data-tipo="alerta"]    { color: var(--ambar); }
+.historial-estado[data-tipo="error"]     { color: var(--rojo); }
+
+.tabla-envoltura { overflow-x: auto; border-radius: 10px; border: 1px solid var(--borde); }
+.tabla-historial { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tabla-historial thead th {
+  background: var(--panel-2); color: var(--amarillo); text-align: left;
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  padding: .45rem .6rem; font-size: .8rem; position: sticky; top: 0;
+}
+.tabla-historial td, .tabla-historial tbody th {
+  padding: .4rem .6rem; border-top: 1px solid var(--borde); vertical-align: middle;
+  font-variant-numeric: tabular-nums; font-weight: 400;
+}
+.tabla-historial tbody tr:nth-child(odd) { background: rgba(255, 255, 255, .02); }
+.tabla-historial .col-num { width: 2.2rem; color: var(--texto-sec); text-align: center; }
+.tabla-historial .col-id  { color: var(--texto-sec); font-size: .75rem; }
+.mov-nombre { display: block; font-weight: 600; }
+.tabla-historial tbody th small { display: block; color: var(--texto-sec); font-size: .68rem; font-family: ui-monospace, Consolas, monospace; }
+.fila-mensaje { text-align: center; color: var(--texto-sec); padding: 1rem !important; }
+.fila-nueva { animation: filaNueva 1.6s ease-out; }
+
+@keyframes destello { 0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, .55); } 100% { box-shadow: 0 0 0 14px rgba(255, 193, 7, 0); } }
+@keyframes filaNueva { 0% { background: rgba(46, 204, 113, .28); } 100% { background: transparent; } }
+
+/* =====================================================================
+   En los modos de pantalla fija (celular y escritorio horizontal) el
+   documento no se desplaza: en MONITOREO se desplaza solo el contenido.
+   ===================================================================== */
+@media (orientation: landscape) and (min-width: 576px),
+       (orientation: portrait) and (max-width: 600px) {
+  body.vista-monitoreo main { overflow-y: auto; scrollbar-width: none; }
+  body.vista-monitoreo main::-webkit-scrollbar { display: none; }
+}
+
+/* ---------------- Celular en horizontal ---------------- */
+@media (orientation: landscape) and (max-height: 520px) {
+  .vistas { padding: .1rem; }
+  .vista-tab { min-height: 28px; padding: .15rem .6rem; font-size: .78rem; }
+  .monitoreo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: .35rem; margin-top: .35rem; align-items: start; }
+  .monitoreo .panel-title { display: flex !important; }
+  .ultimo-tarjeta { padding: .5rem .6rem; gap: .6rem; }
+  .ultimo-icono { width: 44px; height: 44px; font-size: 1.4rem; border-radius: 12px; }
+  .ultimo-nombre { font-size: 1.25rem; }
+  .ultimo-fecha dd { font-size: .9rem; }
+  .monitoreo-nota { font-size: .62rem; }
+  .tabla-historial { font-size: .74rem; }
+  .tabla-historial td, .tabla-historial tbody th { padding: .2rem .45rem; }
+  .tabla-historial thead th { padding: .25rem .45rem; font-size: .68rem; }
+  .tabla-historial tbody th small { display: none; }
+}
+
+/* ---------------- Celular en vertical ---------------- */
+@media (orientation: portrait) and (max-width: 600px) {
+  .app-title { font-size: .95rem !important; }
+  .app-subtitle { display: none; }
+  .vistas { padding: .12rem; gap: .15rem; }
+  .vista-tab { min-height: 32px; padding: .2rem .55rem; font-size: .76rem; gap: .25rem; }
+  .monitoreo { gap: .4rem; margin-top: .4rem; }
+  .monitoreo .panel-title { display: flex !important; }
+  .ultimo-icono { width: 52px; height: 52px; font-size: 1.6rem; }
+  .ultimo-nombre { font-size: 1.45rem; }
+  .tabla-historial { font-size: .8rem; }
+  .tabla-historial td, .tabla-historial tbody th { padding: .3rem .4rem; }
+  .tabla-historial .col-id { display: none; }        /* el ID es opcional: se oculta en pantallas angostas */
+}
+@media (max-width: 360px) {
+  .vista-tab span { display: none; }                  /* solo iconos en pantallas muy angostas */
+  .vista-tab { padding: .25rem .6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ultimo-tarjeta.destello, .fila-nueva { animation: none !important; }
+}

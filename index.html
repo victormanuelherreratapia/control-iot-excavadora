@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Aplicación web de control para la Excavadora IoT: joystick, botones, paro de emergencia y DEMO sobre la API en AWS.">
+  <meta name="description" content="Excavadora IoT: CONTROL (joystick, botones, paro de emergencia y DEMO) y MONITOREO en tiempo real del último movimiento y los 10 más recientes, sobre la API en AWS.">
   <meta name="theme-color" content="#15171B">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Excavadora IoT · Control</title>
+  <title>Excavadora IoT · Control y Monitoreo</title>
 
   <!-- Favicon propio (ruta relativa: funciona en la subruta de GitHub Pages) -->
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -21,6 +21,7 @@
   <link href="css/estop.css" rel="stylesheet">
   <link href="css/movil.css" rel="stylesheet">
   <link href="css/vertical.css" rel="stylesheet">
+  <link href="css/monitoreo.css" rel="stylesheet">
 </head>
 <body class="con-clave">
   <a class="visually-hidden-focusable skip-link" href="#zonaControl">Saltar al control</a>
@@ -36,7 +37,17 @@
           <span class="text-secondary">· ID <span id="vehiculoId">1</span></span>
         </p>
       </div>
-      <span class="badge rounded-pill app-badge">CONTROL</span>
+      <!-- Navegación entre vistas (misma página, misma conexión WSS) -->
+      <nav class="vistas" role="tablist" aria-label="Vistas de la aplicación">
+        <button type="button" class="vista-tab activa" role="tab" id="tabControl" data-vista="control"
+                aria-selected="true" aria-controls="vistaControl">
+          <i class="bi bi-joystick" aria-hidden="true"></i><span>Control</span>
+        </button>
+        <button type="button" class="vista-tab" role="tab" id="tabMonitoreo" data-vista="monitoreo"
+                aria-selected="false" aria-controls="vistaMonitoreo" tabindex="-1">
+          <i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Monitoreo</span>
+        </button>
+      </nav>
       <button type="button" class="btn-icono" id="btnPantallaCompleta" aria-label="Pantalla completa" title="Pantalla completa">
         <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
       </button>
@@ -81,7 +92,7 @@
       «WebSocket en línea» indica la conexión de este navegador con AWS; no confirma que la excavadora esté conectada.
     </p>
 
-    <div class="row g-3 zona-control">
+    <div class="row g-3 zona-control" id="vistaControl" role="tabpanel" aria-labelledby="tabControl">
       <!-- ============ COLUMNA IZQUIERDA: joystick y paro de emergencia ============ -->
       <div class="col-12 col-lg-6">
 
@@ -171,6 +182,65 @@
         </section>
       </div>
     </div>
+
+    <!-- ===================== VISTA MONITOREO ===================== -->
+    <section class="monitoreo" id="vistaMonitoreo" role="tabpanel" aria-labelledby="tabMonitoreo" hidden>
+
+      <!-- Último movimiento -->
+      <article class="panel ultimo" aria-labelledby="tituloUltimo">
+        <h2 id="tituloUltimo" class="panel-title"><i class="bi bi-broadcast" aria-hidden="true"></i> Último movimiento</h2>
+        <div class="ultimo-tarjeta sin-datos" id="ultimoTarjeta" role="status" aria-live="polite">
+          <div class="ultimo-icono"><i id="ultimoIcono" class="bi bi-dash-circle" aria-hidden="true"></i></div>
+          <div class="ultimo-datos">
+            <p class="ultimo-nombre" id="ultimoNombre">Cargando…</p>
+            <p class="ultimo-comando" id="ultimoComando"></p>
+            <dl class="ultimo-fecha">
+              <div><dt>Fecha</dt><dd id="ultimoFecha">—</dd></div>
+              <div><dt>Hora</dt><dd id="ultimoHora">—</dd></div>
+            </dl>
+            <p class="ultimo-origen" id="ultimoOrigen"></p>
+            <p class="ultimo-detalle" id="ultimoDetalle"></p>
+          </div>
+        </div>
+        <p class="ultimo-aviso" id="ultimoAviso"></p>
+        <p class="monitoreo-nota">
+          <i class="bi bi-info-circle" aria-hidden="true"></i>
+          «Último movimiento» es lo que reportó el backend; no confirma que la excavadora se haya movido físicamente.
+          Hora de México (UTC−6).
+        </p>
+      </article>
+
+      <!-- Últimos 10 movimientos -->
+      <section class="panel historial" aria-labelledby="tituloHistorial">
+        <div class="historial-cabecera">
+          <h2 id="tituloHistorial" class="panel-title mb-0"><i class="bi bi-table" aria-hidden="true"></i> Últimos 10 movimientos</h2>
+          <button type="button" class="btn-icono" id="btnHistorialActualizar" aria-label="Actualizar historial desde la API" title="Actualizar">
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+          </button>
+        </div>
+        <p class="historial-estado" id="historialEstado" data-tipo="pendiente" aria-live="polite">Consultando la API…</p>
+        <div class="tabla-envoltura">
+          <table class="tabla-historial">
+            <caption class="visually-hidden">Últimos 10 movimientos individuales guardados en Amazon RDS, del más reciente al más antiguo</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="col-num">#</th>
+                <th scope="col">Movimiento</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Hora</th>
+                <th scope="col" class="col-id">ID</th>
+              </tr>
+            </thead>
+            <tbody id="historialCuerpo"></tbody>
+          </table>
+        </div>
+        <p class="monitoreo-nota">
+          <i class="bi bi-database" aria-hidden="true"></i>
+          Registros persistidos en Amazon RDS (GET /historial). Los pasos de una DEMO no se guardan aquí.
+          Quitar una fila de la pantalla no la borra de la base de datos.
+        </p>
+      </section>
+    </section>
   </main>
 
   <!-- Avisos emergentes -->

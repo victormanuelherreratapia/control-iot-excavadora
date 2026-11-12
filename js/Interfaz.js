@@ -4,6 +4,7 @@
 // Todo texto remoto se inserta con textContent (sin inyección en el DOM).
 // =====================================================================
 import { CATALOGO_UI, etiquetaComando } from "./config.js";
+import { FechaHora } from "./FechaHora.js";
 
 export class Interfaz {
   #$ = (id) => document.getElementById(id);
@@ -110,9 +111,9 @@ export class Interfaz {
     const lista = this.#$("registroEventos");
     const li = document.createElement("li");
 
-    const hora = typeof evt.timestamp === "string" && evt.timestamp.length >= 19
-      ? evt.timestamp.slice(11, 19)
-      : new Date().toLocaleTimeString("es-MX", { hour12: false });
+    // Hora del servidor (UTC) convertida a hora de México, igual que en MONITOREO
+    const hora = FechaHora.formatear(evt.timestamp)?.hora
+      ?? new Date().toLocaleTimeString("es-MX", { hour12: false });
 
     const titulo = document.createElement("strong");
     titulo.textContent = `${hora} ${evt.evento ?? "EVENTO"}`;

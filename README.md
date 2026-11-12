@@ -27,29 +27,39 @@ Ambas vistas están en la misma página y comparten **una sola conexión WSS**. 
 - **Hora:** RDS guarda en UTC; la página la muestra en hora de México (America/Mexico_City).
 
 ## Estructura
+```
+control-iot-excavadora/
+├── index.html
+├── README.md
+└── assets/
+    ├── css/   styles, estop, movil, vertical, monitoreo
+    ├── js/    clases de la aplicación (POO, módulos ES6)
+    └── img/   favicon.svg
+```
+
 | Archivo | Responsabilidad |
 |---|---|
 | `index.html` | Página principal (pestañas CONTROL / MONITOREO) |
-| `css/styles.css` | Estilos base y diseño responsivo |
-| `css/estop.css` | Paro de emergencia y torreta |
-| `css/movil.css` · `css/vertical.css` | Celular horizontal y vertical |
-| `css/monitoreo.css` | Pestañas, tarjeta y tabla de monitoreo |
-| `assets/favicon.svg` | Favicon propio |
-| `js/app.js` | `AplicacionControl`: crea y coordina los objetos |
-| `js/config.js` | URL de la API, WSS y catálogo visual (sin secretos) |
-| `js/ClienteApi.js` | Cliente REST (Fetch, tiempo límite y errores) |
-| `js/ClienteWS.js` | WebSocket WSS único con reconexión |
-| `js/PanelEstado.js` | Indicadores WSS / API AWS / Amazon RDS |
-| `js/Interfaz.js` | Botones, avisos, etapas y registro |
-| `js/ServicioComandos.js` | Envío de comandos y prioridad de DETENER |
-| `js/ServicioDemo.js` | Cargar, iniciar y cancelar DEMO |
-| `js/ControlContinuo.js` | Mantener presionado |
-| `js/Joystick.js` | Joystick táctil, con mouse y con teclado |
-| `js/Torreta.js` · `js/Efectos.js` | Baliza, sonidos y vibración |
-| `js/Navegacion.js` | Pestañas CONTROL / MONITOREO |
-| `js/ServicioMonitoreo.js` | Lógica del monitoreo (REST + WSS) |
-| `js/VistaMonitoreo.js` | Tarjeta y tabla en el DOM |
-| `js/FechaHora.js` | Conversión UTC → hora de México |
+| `assets/css/styles.css` | Estilos base y diseño responsivo |
+| `assets/css/estop.css` | Paro de emergencia y torreta |
+| `assets/css/movil.css` · `assets/css/vertical.css` | Celular horizontal y vertical |
+| `assets/css/monitoreo.css` | Pestañas, tarjeta y tabla de monitoreo |
+| `assets/img/favicon.svg` | Favicon propio |
+| `assets/js/app.js` | `AplicacionControl`: crea y coordina los objetos |
+| `assets/js/config.js` | URL de la API, WSS y catálogo visual (sin secretos) |
+| `assets/js/ClienteApi.js` | Cliente REST (Fetch, tiempo límite y errores) |
+| `assets/js/ClienteWS.js` | WebSocket WSS único con reconexión |
+| `assets/js/PanelEstado.js` | Indicadores WSS / API AWS / Amazon RDS |
+| `assets/js/Interfaz.js` | Botones, avisos, etapas y registro |
+| `assets/js/ServicioComandos.js` | Envío de comandos y prioridad de DETENER |
+| `assets/js/ServicioDemo.js` | Cargar, iniciar y cancelar DEMO |
+| `assets/js/ControlContinuo.js` | Mantener presionado |
+| `assets/js/Joystick.js` | Joystick táctil, con mouse y con teclado |
+| `assets/js/Torreta.js` · `assets/js/Efectos.js` | Baliza, sonidos y vibración |
+| `assets/js/Navegacion.js` | Pestañas CONTROL / MONITOREO |
+| `assets/js/ServicioMonitoreo.js` | Lógica del monitoreo (REST + WSS) |
+| `assets/js/VistaMonitoreo.js` | Tarjeta y tabla en el DOM |
+| `assets/js/FechaHora.js` | Conversión UTC → hora de México |
 
 ## Integración con la API (AWS)
 | Uso | Método y ruta |

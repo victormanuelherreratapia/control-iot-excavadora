@@ -72,25 +72,22 @@ export class PanelEstado {
     }
   }
 
-  // Amazon RDS: no hay una ruta de diagnóstico dedicada (se conservan las 21 APIs),
-  // así que se usa una consulta EXISTENTE que obligatoriamente pasa por RDS:
-  // GET /vehiculos/{id}/estado → sp_obtener_estado. El navegador nunca se
-  // conecta a MySQL ni ve credenciales; quien consulta RDS es la API en EC2.
-  //   200 con datos       → Disponible (RDS respondió)
-  //   500 / 502 / 503     → No disponible (la API está viva pero RDS falló)
+  // Amazon RDS: diagnóstico hecho por el BACKEND (GET /api/v1/salud ejecuta
+  // SELECT 1 en RDS). El navegador nunca se conecta a MySQL ni ve credenciales.
+  //   200                 → Disponible (RDS respondió al backend)
+  //   503 / 500 / 502     → No disponible (la API está viva pero RDS falló)
   //   sin red / timeout   → Sin verificar (no se puede culpar a RDS sin evidencia)
   async comprobarRds() {
     if (this.#comprobandoRds) return;
     this.#comprobandoRds = true;
     try {
-      const r = await this.#cliente.estado();
-      const ok = r !== null && typeof r === "object";
+      const r = await this.#cliente.saludRds();
+      const ok = r && typeof r === "object" && r.rds === "disponible";
       this.fijar("estadoRds", ok ? "disponible" : "sin-verificar",
-        ok ? "sp_obtener_estado respondió desde Amazon RDS (vía GET /vehiculos/1/estado)"
-           : "Respuesta inesperada; no se puede confirmar RDS");
+        ok ? "El backend consultó Amazon RDS (GET /api/v1/salud)" : "Respuesta inesperada; no se puede confirmar RDS");
     } catch (e) {
       if ([500, 502, 503].includes(e.status)) {
-        this.fijar("estadoRds", "no-disponible", `La API respondió ${e.status} al consultar RDS`);
+        this.fijar("estadoRds", "no-disponible", `El backend respondió ${e.status} al consultar RDS`);
       } else {
         this.fijar("estadoRds", "sin-verificar", "La API no respondió; no se puede comprobar RDS");
       }

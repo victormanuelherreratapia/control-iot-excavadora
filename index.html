@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Excavadora IoT: CONTROL (joystick, botones, paro de emergencia y DEMO) y MONITOREO en tiempo real del último movimiento y los 10 más recientes, sobre la API en AWS.">
+  <meta name="description" content="Plataforma IoT de vehículos: CONTROL, MONITOREO en tiempo real y ADMINISTRACIÓN comercial (Administrador, Usuario e Invitado) sobre FastAPI en AWS y Amazon RDS.">
   <meta name="theme-color" content="#15171B">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Excavadora IoT · Control y Monitoreo</title>
+  <title>Excavadora IoT · Control, Monitoreo y Administración</title>
 
   <!-- Favicon propio (ruta relativa: funciona en la subruta de GitHub Pages) -->
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
@@ -22,8 +22,9 @@
   <link href="assets/css/movil.css" rel="stylesheet">
   <link href="assets/css/vertical.css" rel="stylesheet">
   <link href="assets/css/monitoreo.css" rel="stylesheet">
+  <link href="assets/css/admin.css" rel="stylesheet">
 </head>
-<body class="con-clave">
+<body>
   <a class="visually-hidden-focusable skip-link" href="#zonaControl">Saltar al control</a>
 
   <!-- ===================== ENCABEZADO ===================== -->
@@ -47,15 +48,51 @@
                 aria-selected="false" aria-controls="vistaMonitoreo" tabindex="-1">
           <i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Monitoreo</span>
         </button>
+        <button type="button" class="vista-tab" role="tab" id="tabAdmin" data-vista="administracion"
+                aria-selected="false" aria-controls="vistaAdmin" tabindex="-1" hidden>
+          <i class="bi bi-gear-wide-connected" aria-hidden="true"></i><span>Administración</span>
+        </button>
       </nav>
       <button type="button" class="btn-icono" id="btnPantallaCompleta" aria-label="Pantalla completa" title="Pantalla completa">
         <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
       </button>
     </div>
     <div class="caution-strip" aria-hidden="true"></div>
+    <!-- Sesión actual: rol, unidad seleccionada, tiempo del invitado y salir -->
+    <div class="container-xl barra-sesion" id="barraSesion" hidden></div>
   </header>
 
   <main class="container-xl py-3" id="zonaControl">
+
+    <!-- ===================== ACCESO (sin sesión) ===================== -->
+    <section class="acceso" id="pantallaAcceso" hidden aria-labelledby="tituloAcceso">
+      <p class="form-msg acceso-aviso" id="accesoAviso" role="status" aria-live="polite"></p>
+      <div class="acceso-grid">
+        <article class="panel">
+          <h2 id="tituloAcceso" class="panel-title"><i class="bi bi-person-lock" aria-hidden="true"></i> Iniciar sesión</h2>
+          <p class="small text-secondary">Administrador (empresa) o Usuario (comprador).</p>
+          <form id="formLogin" autocomplete="on" novalidate>
+            <label class="form-label small" for="loginCorreo">Correo</label>
+            <input class="form-control mb-2" id="loginCorreo" name="correo" type="email" autocomplete="username" required maxlength="120">
+            <label class="form-label small" for="loginPassword">Contraseña</label>
+            <input class="form-control mb-3" id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="128">
+            <button type="submit" class="btn btn-warning w-100 fw-semibold"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Entrar</button>
+            <p class="form-msg" id="loginMensaje" role="status" aria-live="polite"></p>
+          </form>
+        </article>
+        <article class="panel">
+          <div class="d-flex align-items-center justify-content-between">
+            <h2 class="panel-title mb-0"><i class="bi bi-stars" aria-hidden="true"></i> Prueba nuestros vehículos IoT</h2>
+            <button type="button" class="btn-icono" id="btnRecargarCatalogo" aria-label="Actualizar catálogo" title="Actualizar">
+              <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="small text-secondary mb-2">Sin cuenta: prueba temporal de una unidad de exhibición.</p>
+          <p class="form-msg" id="catalogoEstado" role="status" aria-live="polite"></p>
+          <div class="catalogo" id="catalogoLista"></div>
+        </article>
+      </div>
+    </section>
 
     <!-- Aviso para celular en vertical -->
     <div class="aviso-girar" role="note">
@@ -241,6 +278,13 @@
         </p>
       </section>
     </section>
+    <!-- ===================== VISTA ADMINISTRACIÓN / MI CUENTA ===================== -->
+    <section class="panel gestion" id="vistaAdmin" role="tabpanel" aria-labelledby="tabAdmin" hidden></section>
+
+    <p class="sin-unidad-aviso" role="note">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      Tu cuenta no tiene unidades para operar. El Administrador debe asignarte una.
+    </p>
   </main>
 
   <!-- Avisos emergentes -->

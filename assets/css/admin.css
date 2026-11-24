@@ -1,0 +1,173 @@
+/* =====================================================================
+   Práctica 4.3: acceso, barra de sesión, ADMINISTRACIÓN / MI CUENTA
+   (Mobile First; se carga al final para tener prioridad)
+   ===================================================================== */
+
+/* ---------------- Mensajes de formulario ---------------- */
+.form-msg { font-size: .8rem; margin: .4rem 0 0; min-height: 1em; color: var(--texto-sec); }
+.form-msg:empty { display: none; }
+.form-msg[data-tipo="ok"]     { color: var(--verde); }
+.form-msg[data-tipo="error"]  { color: var(--rojo); }
+.form-msg[data-tipo="alerta"] { color: var(--ambar); }
+
+/* ---------------- Barra de sesión ---------------- */
+.barra-sesion {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .75rem;
+  padding-top: .35rem; padding-bottom: .35rem; font-size: .85rem;
+}
+.barra-sesion[hidden] { display: none !important; }
+.sesion-quien { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.sesion-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 14rem; }
+.rol-chip {
+  font-family: "Barlow Condensed", sans-serif; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  font-size: .75rem; padding: .1rem .5rem; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--borde);
+}
+.rol-chip.rol-admin    { color: #111; background: var(--amarillo); border-color: var(--amarillo); }
+.rol-chip.rol-usuario  { color: #0b2a17; background: var(--verde); border-color: var(--verde); }
+.rol-chip.rol-invitado { color: #04222f; background: var(--azul); border-color: var(--azul); }
+.sesion-vehiculo { width: auto; max-width: 16rem; }
+.sesion-unidad { white-space: nowrap; }
+.sesion-reloj {
+  font-variant-numeric: tabular-nums; font-weight: 700; padding: .1rem .55rem; border-radius: 8px;
+  background: var(--panel-2); border: 1px solid var(--azul); color: var(--azul);
+}
+.sesion-reloj.poco-tiempo { border-color: var(--rojo); color: var(--rojo); animation: parpadeo 1s steps(2) infinite; }
+.barra-sesion .btn { margin-left: auto; }
+@keyframes parpadeo { 50% { opacity: .55; } }
+
+/* ---------------- Pantalla de acceso ---------------- */
+.acceso[hidden] { display: none !important; }
+.acceso { margin-top: .75rem; }
+.acceso-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .acceso-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; } }
+.acceso .panel { margin: 0; }
+.catalogo { display: grid; gap: .6rem; }
+.catalogo-item { background: var(--panel-2); border: 1px solid var(--borde); border-radius: 12px; padding: .75rem .85rem; }
+.catalogo-nombre { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--amarillo); margin: 0 0 .25rem; }
+
+body.sin-sesion .vistas,
+body.sin-sesion .zona-control,
+body.sin-sesion .status-note,
+body.sin-sesion .aviso-girar,
+body.sin-sesion #vistaMonitoreo,
+body.sin-sesion #vistaAdmin,
+body.sin-sesion #btnPantallaCompleta { display: none !important; }
+
+/* ---------------- Cuenta sin unidades ---------------- */
+.sin-unidad-aviso { display: none; }
+body.sin-unidad .sin-unidad-aviso {
+  display: block; margin-top: .75rem; padding: .75rem 1rem; border: 1px dashed var(--ambar); border-radius: 12px; color: var(--ambar);
+}
+body.sin-unidad .zona-control,
+body.sin-unidad #vistaMonitoreo,
+body.sin-unidad #tabControl,
+body.sin-unidad #tabMonitoreo { display: none !important; }
+body.sin-unidad.vista-administracion .sin-unidad-aviso { display: none; }
+
+/* ---------------- Vista ADMINISTRACIÓN / MI CUENTA ---------------- */
+.gestion[hidden] { display: none !important; }
+.gestion { margin-top: .75rem; }
+body.vista-administracion .zona-control,
+body.vista-administracion .status-note,
+body.vista-administracion .aviso-girar { display: none !important; }
+
+.admin-layout { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+.admin-menu { display: flex; gap: .35rem; overflow-x: auto; scrollbar-width: none; padding-bottom: .15rem; }
+.admin-menu::-webkit-scrollbar { display: none; }
+.admin-menu-btn {
+  display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; flex-shrink: 0;
+  background: var(--panel-2); color: var(--texto-sec); border: 1px solid var(--borde); border-radius: 10px;
+  padding: .4rem .7rem; font-size: .85rem; min-height: 40px;
+}
+.admin-menu-btn:hover { color: var(--texto); border-color: var(--amarillo); }
+.admin-menu-btn.activa { background: var(--amarillo); color: #111; border-color: var(--amarillo); font-weight: 600; }
+.admin-menu-btn:focus-visible, .metrica:focus-visible { outline: 3px solid var(--amarillo); outline-offset: 2px; }
+@media (min-width: 992px) {
+  .admin-layout { grid-template-columns: 210px minmax(0, 1fr); align-items: start; }
+  .admin-menu { flex-direction: column; overflow: visible; }
+}
+.admin-contenido { min-width: 0; }
+
+/* Métricas del Dashboard */
+.metricas { display: grid; gap: .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 576px) { .metricas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .metricas { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.metrica {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: .6rem; align-items: center; text-align: left;
+  background: var(--panel-2); border: 1px solid var(--borde); border-radius: 12px; padding: .6rem .75rem; color: var(--texto);
+}
+.metrica > i { grid-row: span 2; font-size: 1.5rem; color: var(--amarillo); }
+.metrica-valor { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.6rem; line-height: 1; }
+.metrica-titulo { font-size: .75rem; color: var(--texto-sec); }
+button.metrica:hover { border-color: var(--amarillo); }
+
+/* Tablas y formularios */
+.admin-tabla { overflow-x: auto !important; margin-bottom: .5rem; }
+.admin-tabla .tabla-historial { min-width: 640px; }
+.admin-tabla td { vertical-align: middle; }
+.acciones-fila { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+.acciones-fila .form-select { width: auto; max-width: 12rem; }
+.fila-rechazo td { color: var(--ambar); }
+.admin-form { background: var(--panel-2); border: 1px solid var(--borde); border-radius: 12px; padding: .75rem; margin-top: .75rem; }
+.gestion .form-control, .gestion .form-select { background-color: var(--carbon); border-color: var(--borde); color: var(--texto); }
+.gestion .form-control:focus, .gestion .form-select:focus,
+.acceso .form-control:focus { border-color: var(--amarillo); box-shadow: 0 0 0 .2rem rgba(255, 193, 7, .25); }
+.clave-dispositivo { border: 1px dashed var(--amarillo); border-radius: 10px; padding: .6rem; margin: .5rem 0; font-size: .85rem; }
+.clave-dispositivo[hidden] { display: none; }
+
+.insignia { display: inline-block; font-size: .72rem; font-weight: 600; padding: .1rem .5rem; border-radius: 999px; border: 1px solid; }
+.insignia-disponible { color: var(--verde); border-color: var(--verde); }
+.insignia-vendido    { color: var(--amarillo); border-color: var(--amarillo); }
+.insignia-exhibicion { color: var(--azul); border-color: var(--azul); }
+.insignia-inactivo   { color: var(--gris); border-color: var(--gris); }
+
+/* Editor de demos */
+.pasos-demo { list-style: none; padding: 0; margin: 0 0 .35rem; display: grid; gap: .35rem; }
+.paso-demo {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .5rem; align-items: center;
+  background: var(--panel-2); border: 1px solid var(--borde); border-radius: 10px; padding: .4rem .5rem;
+}
+.paso-num {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--amarillo); color: #111; font-weight: 700; font-size: .85rem;
+}
+.paso-campos { display: grid; gap: .3rem; min-width: 0; }
+@media (min-width: 576px) { .paso-campos { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+.paso-tiempos { display: flex; gap: .35rem; }
+.paso-tiempos label { display: flex; align-items: center; gap: .25rem; color: var(--texto-sec); }
+.paso-tiempos input { width: 5.5rem; }
+.paso-acciones { display: flex; gap: .25rem; }
+.btn-mini { width: 36px; height: 36px; font-size: .95rem; }
+.btn-mini:disabled { opacity: .35; }
+.btn-mini.peligro { color: var(--rojo); }
+
+/* ---------------- Pantallas fijas: estas vistas sí se desplazan ---------------- */
+@media (orientation: landscape) and (min-width: 576px),
+       (orientation: portrait) and (max-width: 600px) {
+  body.sin-sesion main,
+  body.vista-administracion main,
+  body.sin-unidad main { overflow-y: auto !important; scrollbar-width: none; }
+}
+
+/* ---------------- Celular: barra de sesión compacta ---------------- */
+@media (orientation: landscape) and (max-height: 520px) {
+  .barra-sesion { padding-top: .1rem; padding-bottom: .1rem; font-size: .72rem; gap: .3rem .5rem; }
+  .barra-sesion .btn { padding: .05rem .45rem; font-size: .72rem; }
+  .sesion-vehiculo { padding-top: 0; padding-bottom: 0; font-size: .72rem; max-width: 11rem; }
+  .sesion-nombre { max-width: 8rem; }
+  .rol-chip { font-size: .62rem; }
+}
+@media (orientation: portrait) and (max-width: 600px) {
+  .barra-sesion { padding-top: .15rem; padding-bottom: .15rem; font-size: .75rem; gap: .25rem .5rem; }
+  .barra-sesion .btn { padding: .1rem .5rem; font-size: .75rem; }
+  .sesion-nombre { display: none; }
+  .sesion-vehiculo { max-width: 10rem; font-size: .75rem; padding-top: .1rem; padding-bottom: .1rem; }
+}
+/* Con 3 pestañas: en celulares angostos solo iconos (el texto queda para lectores de pantalla) */
+@media (max-width: 480px) {
+  body.rol-admin .vista-tab span, body.rol-usuario .vista-tab span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  body.rol-admin .vista-tab, body.rol-usuario .vista-tab { padding: .25rem .65rem; }
+  body.rol-admin .vista-tab i, body.rol-usuario .vista-tab i { font-size: 1.1rem; }
+}

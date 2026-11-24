@@ -16,9 +16,18 @@
 //     ├─ ServicioMonitoreo  (último movimiento + 10 movimientos: REST + WSS)
 //     └─ VistaMonitoreo     (tarjeta y tabla)
 //
-//   Una SOLA conexión WSS (ClienteWS) alimenta ambas vistas.
+//     ├─ Sesion / PantallaAcceso / BarraSesion (4.3: login, invitado, Mis vehículos)
+//     └─ VistaAdministracion (ADMIN) · VistaCuenta (USUARIO)
+//
+//   Una SOLA conexión WSS (ClienteWS) alimenta todas las vistas; lleva el
+//   token de la sesión y solo recibe eventos de la unidad autorizada.
 // =====================================================================
-import { CONFIG, COMANDOS_JOYSTICK, COMANDO_DETENER, COMANDOS_PULSO } from "./config.js";
+import { CONFIG, ENDPOINTS, COMANDOS_JOYSTICK, COMANDO_DETENER, COMANDOS_PULSO } from "./config.js";
+import { Sesion } from "./Sesion.js";
+import { PantallaAcceso } from "./PantallaAcceso.js";
+import { BarraSesion } from "./BarraSesion.js";
+import { VistaAdministracion } from "./VistaAdministracion.js";
+import { VistaCuenta } from "./VistaCuenta.js";
 import { ClienteApi } from "./ClienteApi.js";
 import { ClienteWS } from "./ClienteWS.js";
 import { PanelEstado } from "./PanelEstado.js";
@@ -35,7 +44,12 @@ import { ServicioMonitoreo } from "./ServicioMonitoreo.js";
 
 class AplicacionControl {
   #ui = new Interfaz();
-  #api = new ClienteApi({ baseUrl: CONFIG.API_BASE_URL, idVehiculo: CONFIG.VEHICULO_ID });
+  #api = new ClienteApi({
+    baseUrl: CONFIG.API_BASE_URL,
+    idVehiculo: CONFIG.VEHICULO_ID,
+    token: () => Sesion.token(),
+    alNoAutorizado: () => this.#salir("Tu sesión expiró o fue revocada. Inicia sesión de nuevo."),
+  });
   #panel = new PanelEstado(this.#api);
   #comandos = new ServicioComandos({ api: this.#api, ui: this.#ui });
   #demo = new ServicioDemo({ api: this.#api, ui: this.#ui });
@@ -53,9 +67,52 @@ class AplicacionControl {
   #catalogoListo = false;
   #wsEnLinea = false;
   #wsHaEstadoEnLinea = false;
+  #barra;
+  #vistaGestion = null;   // VistaAdministracion (ADMIN) o VistaCuenta (USUARIO)
+  #saliendo = false;
 
-  iniciar() {
+  async iniciar() {
     this.#panel.iniciar();
+    const aviso = Sesion.tomarAviso();
+    const sesion = Sesion.actual();
+    if (!sesion) {
+      this.#panel.fijarWebSocket("desconectado");
+      new PantallaAcceso({ api: this.#api }).mostrar(aviso ?? "");
+      return;
+    }
+
+    // Unidades que ESTA sesión puede operar (lo decide FastAPI, no el navegador)
+    let vehiculos;
+    try {
+      vehiculos = await this.#api.get(ENDPOINTS.misVehiculos());
+    } catch (e) {
+      if (e.status !== 401) this.#ui.aviso(`No se pudieron cargar tus vehículos: ${e.message}`, "error", 8000);
+      return;
+    }
+    const valido = vehiculos.some((v) => v.id_vehiculo === CONFIG.VEHICULO_ID);
+    if (!valido && vehiculos.length && Sesion.vehiculoGuardado() !== vehiculos[0].id_vehiculo) {
+      Sesion.fijarVehiculo(vehiculos[0].id_vehiculo);   // primera unidad permitida
+      Sesion.recargar();
+      return;
+    }
+
+    document.body.classList.add(`rol-${sesion.tipo.toLowerCase()}`);
+    this.#barra = new BarraSesion({
+      api: this.#api,
+      alTerminar: () => this.#salir("Se terminó el tiempo de tu prueba. La unidad se detuvo y quedó libre."),
+    });
+    this.#barra.dibujar(vehiculos);
+    if (aviso) this.#ui.aviso(aviso, "info", 6000);
+    this.#prepararGestion(sesion.tipo);
+
+    if (!valido) {
+      // Sesión válida pero sin unidades: no se abre WSS ni se piden datos de ningún vehículo
+      document.body.classList.add("sin-unidad");
+      this.#panel.fijarWebSocket("desconectado");
+      this.#configurarNavegacion();
+      return;
+    }
+
     this.#conectarWebSocket();
     this.#crearJoystick();
     this.#configurarServicios();
@@ -66,21 +123,51 @@ class AplicacionControl {
     this.#cargarDatos();
   }
 
+  // ---------------- Sesión, roles y vista de gestión ----------------
+  #prepararGestion(tipo) {
+    const tab = document.getElementById("tabAdmin");
+    const recargarDemos = () => { if (this.#catalogoListo) this.#demo.cargar().then(() => this.#actualizarHabilitacion()); };
+    if (tipo === "ADMIN") {
+      this.#vistaGestion = new VistaAdministracion({ api: this.#api, alCambiarDemos: recargarDemos });
+    } else if (tipo === "USUARIO") {
+      this.#vistaGestion = new VistaCuenta({ api: this.#api, alCambiarDemos: recargarDemos });
+      tab.querySelector("span").textContent = "Mi cuenta";
+    }
+    tab.hidden = !this.#vistaGestion;     // el Invitado no tiene esta pestaña (y la API lo rechaza con 403)
+    this.#vistaGestion?.iniciar();
+  }
+
+  /** Cierra la sesión local (sin pedir nada a la API) y vuelve a la pantalla de acceso. */
+  #salir(aviso) {
+    if (this.#saliendo) return;
+    this.#saliendo = true;
+    this.#ws?.detener();
+    this.#mando.cancelar();
+    Sesion.cerrar(aviso);
+    this.#ui.aviso(aviso, "alerta", 4000);
+    setTimeout(() => Sesion.recargar(), 1500);
+  }
+
+  #configurarNavegacion() {
+    this.#navegacion = new Navegacion({
+      alCambiar: (vista) => {
+        if (vista !== "control") this.#soltarTodo("cambio de vista");   // nada queda presionado al salir de CONTROL
+        if (vista === "monitoreo" && !document.body.classList.contains("sin-unidad")) {
+          this.#monitoreo.sincronizar("volver a MONITOREO");
+        }
+        if (vista === "administracion") this.#vistaGestion?.mostrar();
+      },
+    });
+    this.#navegacion.iniciar();
+  }
+
   // ---------------- Navegación y MONITOREO ----------------
   #configurarMonitoreo() {
     this.#monitoreo.iniciar();                         // carga inicial REST (estado + 10 movimientos)
     document.getElementById("btnHistorialActualizar")
       .addEventListener("click", () => this.#monitoreo.sincronizar("botón actualizar"));
 
-    this.#navegacion = new Navegacion({
-      alCambiar: (vista) => {
-        if (vista === "monitoreo") {
-          this.#soltarTodo("cambio de vista");          // nada queda presionado al salir de CONTROL
-          this.#monitoreo.sincronizar("volver a MONITOREO");
-        }
-      },
-    });
-    this.#navegacion.iniciar();
+    this.#configurarNavegacion();
 
     // Al volver a la pestaña del navegador también se resincroniza
     document.addEventListener("visibilitychange", () => {
@@ -90,7 +177,9 @@ class AplicacionControl {
 
   // ---------------- WebSocket ----------------
   #conectarWebSocket() {
-    this.#ws = new ClienteWS(CONFIG.WS_URL, {
+    // El token viaja en la URL porque el navegador no permite cabeceras en WebSocket.
+    // FastAPI lo valida y comprueba el permiso sobre ESTA unidad antes de aceptar.
+    this.#ws = new ClienteWS(() => `${CONFIG.WS_URL}?token=${encodeURIComponent(Sesion.token())}`, {
       onEstado: (estado) => {
         this.#panel.fijarWebSocket(estado);
         const antes = this.#wsEnLinea;
@@ -102,6 +191,13 @@ class AplicacionControl {
         if (!this.#wsEnLinea && antes) this.#monitoreo.sinConexion();
       },
       onMensaje: (evt) => this.#manejarEvento(evt),
+      // El servidor rechazó o cerró el canal: se revisa si la sesión sigue vigente
+      onRechazo: async () => {
+        try {
+          await this.#api.get(ENDPOINTS.yo());          // si da 401, #salir() se encarga
+          this.#ui.aviso("El servidor no autorizó el canal WSS de esta unidad.", "error", 8000);
+        } catch { /* 401 ya manejado */ }
+      },
     });
     this.#ws.conectar();
     window.addEventListener("offline", () => this.#ws.forzarCierre());
@@ -111,6 +207,19 @@ class AplicacionControl {
   // Solo se procesan eventos del vehículo propio
   #manejarEvento(evt) {
     if (evt.id_vehiculo !== undefined && Number(evt.id_vehiculo) !== CONFIG.VEHICULO_ID) return;
+    if (evt.evento === "PRUEBA_INVITADO_FIN" && Sesion.tipo() === "INVITADO") {
+      this.#salir("Tu prueba terminó. La unidad se detuvo y quedó libre.");
+      return;
+    }
+    if (evt.evento === "ACCESO_REVOCADO") {
+      if (Sesion.tipo() === "INVITADO") this.#salir("Tu prueba terminó. La unidad se detuvo y quedó libre.");
+      else {
+        this.#ui.aviso(`Acceso a esta unidad revocado: ${evt.motivo ?? ""}`, "alerta", 6000);
+        Sesion.fijarVehiculo("");
+        setTimeout(() => Sesion.recargar(), 2500);
+      }
+      return;
+    }
     this.#ui.registrarEvento(evt);
     this.#comandos.recibirEvento(evt);
     this.#demo.recibirEvento(evt);
@@ -220,7 +329,7 @@ class AplicacionControl {
     pintar();
   }
 
-  // La API rechazó una orden de control (no debería ocurrir: esas rutas son públicas)
+  // La API rechazó una orden de control (403 sin permiso, 409 otra sesión controla, 429 exceso)
   #ordenRechazada() {
     this.#mando.cancelar();
     this.#efectos.detenerReversa();

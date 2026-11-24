@@ -2,10 +2,16 @@
 // Configuración pública de la aplicación (NO contiene secretos)
 // =====================================================================
 
-export const VEHICULO_ID = 1;
+// Unidad seleccionada en «Mis vehículos» (se guarda por pestaña; al cambiar
+// de unidad se recarga la página para cerrar el canal WSS anterior).
+function leerVehiculo() {
+  try { return Number(sessionStorage.getItem("iot.vehiculo")) || null; } catch { return null; }
+}
+export const VEHICULO_ID = leerVehiculo() ?? 1;
 
 export const CONFIG = Object.freeze({
   API_BASE_URL: "https://vehiculoiot-victor.duckdns.org",
+  // El token de la sesión se agrega al conectar (?token=...), nunca se guarda aquí
   WS_URL: `wss://vehiculoiot-victor.duckdns.org/ws/vehiculo/${VEHICULO_ID}`,
   VEHICULO_ID,
   ORIGEN: "WebControl_Excavadora",   // valor del campo "origen" en los POST
@@ -28,6 +34,7 @@ export const CONFIG = Object.freeze({
 // Rutas reales documentadas en Swagger (no se inventa ninguna)
 export const ENDPOINTS = Object.freeze({
   salud:        () => "/",
+  saludRds:     () => "/api/v1/salud",                      // diagnóstico de RDS hecho por el backend
   vehiculo:     (id) => `/api/v1/vehiculos/${id}`,
   comandos:     (id) => `/api/v1/vehiculos/${id}/comandos`,
   estado:       (id) => `/api/v1/vehiculos/${id}/estado`,   // SP: sp_obtener_estado (consulta RDS)
@@ -36,6 +43,14 @@ export const ENDPOINTS = Object.freeze({
   movimiento:   () => "/api/v1/movimientos/individual",
   iniciarDemo:  (id, idDemo) => `/api/v1/vehiculos/${id}/demos/${idDemo}/iniciar`,
   cancelarDemo: (id) => `/api/v1/vehiculos/${id}/demos/cancelar`,
+  // ---- Práctica 4.3 ----
+  login:        () => "/api/v1/auth/login",
+  logout:       () => "/api/v1/auth/logout",
+  yo:           () => "/api/v1/auth/yo",
+  misVehiculos: () => "/api/v1/mis-vehiculos",
+  catalogo:     () => "/api/v1/catalogo",
+  invitado:     () => "/api/v1/invitado/sesiones",
+  finInvitado:  () => "/api/v1/invitado/sesiones/actual",
 });
 
 // Comandos que controla el joystick (deben existir en el catálogo de la API)

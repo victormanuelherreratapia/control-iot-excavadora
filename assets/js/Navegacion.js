@@ -1,12 +1,15 @@
 // =====================================================================
-// Clase Navegacion: pestañas CONTROL / MONITOREO dentro de la misma página.
-// No recarga el documento ni crea otra conexión: solo cambia la vista
-// visible. Recuerda la vista en la dirección (#monitoreo) para poder
-// compartir el enlace o recargar sin perderla.
+// Clase Navegacion: pestañas CONTROL / MONITOREO / ADMINISTRACIÓN dentro
+// de la misma página. No recarga el documento ni crea otra conexión WSS:
+// solo cambia la vista visible. La vista queda en la dirección (#monitoreo)
+// para poder recargar sin perderla.
+// Las pestañas que el rol no puede usar se ocultan, pero la seguridad
+// real está en FastAPI (ocultar un botón no protege una API).
 // =====================================================================
 
+const PANELES = { monitoreo: "vistaMonitoreo", administracion: "vistaAdmin" };
+
 export class Navegacion {
-  static #VISTAS = ["control", "monitoreo"];
   #botones;
   #alCambiar;
   #actual = null;
@@ -23,35 +26,47 @@ export class Navegacion {
 
   get actual() { return this.#actual; }
 
+  #visibles() {
+    return this.#botones.filter((b) => !b.hidden);
+  }
+
   iniciar() {
     this.ir(this.#desdeHash(), false);
   }
 
   ir(vista, actualizarHash = true) {
-    if (!Navegacion.#VISTAS.includes(vista) || vista === this.#actual) return;
+    const disponibles = this.#visibles().map((b) => b.dataset.vista);
+    if (!disponibles.includes(vista)) vista = disponibles[0] ?? "control";
+    if (vista === this.#actual) return;
     this.#actual = vista;
     document.body.classList.toggle("vista-monitoreo", vista === "monitoreo");
-    document.getElementById("vistaMonitoreo").hidden = vista !== "monitoreo";
+    document.body.classList.toggle("vista-administracion", vista === "administracion");
+    for (const [nombre, id] of Object.entries(PANELES)) {
+      const panel = document.getElementById(id);
+      if (panel) panel.hidden = vista !== nombre;
+    }
     this.#botones.forEach((b) => {
       const activa = b.dataset.vista === vista;
       b.classList.toggle("activa", activa);
       b.setAttribute("aria-selected", String(activa));
       b.tabIndex = activa ? 0 : -1;
     });
-    if (actualizarHash) history.replaceState(null, "", vista === "monitoreo" ? "#monitoreo" : "#control");
+    if (actualizarHash) history.replaceState(null, "", `#${vista}`);
     this.#alCambiar(vista);
   }
 
   #desdeHash() {
-    return location.hash === "#monitoreo" ? "monitoreo" : "control";
+    const h = location.hash.replace("#", "");
+    return ["control", "monitoreo", "administracion"].includes(h) ? h : "control";
   }
 
   // Flechas izquierda/derecha entre pestañas (patrón accesible de tablist)
   #teclado(e) {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
-    const i = this.#botones.indexOf(e.currentTarget);
-    const siguiente = this.#botones[(i + (e.key === "ArrowRight" ? 1 : -1) + this.#botones.length) % this.#botones.length];
+    const visibles = this.#visibles();
+    const i = visibles.indexOf(e.currentTarget);
+    const siguiente = visibles[(i + (e.key === "ArrowRight" ? 1 : -1) + visibles.length) % visibles.length];
     siguiente.focus();
     this.ir(siguiente.dataset.vista);
   }

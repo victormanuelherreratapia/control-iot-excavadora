@@ -52,7 +52,7 @@ export class BarraSesion {
     if (s.tipo === "INVITADO") {
       const reloj = el("span", { class: "sesion-reloj", role: "timer", "aria-live": "off" }, "--:--");
       partes.push(reloj);
-      this.#iniciarReloj(reloj, Date.parse(s.expira));
+      this.#iniciarReloj(reloj, Sesion.expiraMs());
     }
     partes.push(salir);
     this.#raiz.append(...partes);

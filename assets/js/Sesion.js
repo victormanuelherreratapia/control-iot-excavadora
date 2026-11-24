@@ -5,6 +5,8 @@
 // Cada pestaña tiene su propia sesión: sirve para probar Admin, Usuario
 // e Invitado al mismo tiempo en pestañas distintas.
 // =====================================================================
+import { FechaHora } from "./FechaHora.js";
+
 const CLAVE = "iot.sesion";
 const CLAVE_VEHICULO = "iot.vehiculo";
 const CLAVE_AVISO = "iot.aviso";
@@ -27,7 +29,7 @@ export class Sesion {
     if (Sesion.#memoria) return Sesion.#memoria;
     try {
       const s = JSON.parse(leer(CLAVE) ?? "null");
-      if (s && typeof s.token === "string" && Date.parse(s.expira) > Date.now()) {
+      if (s && typeof s.token === "string" && (FechaHora.aMs(s.expira) ?? 0) > Date.now()) {
         Sesion.#memoria = s;
         return s;
       }
@@ -46,6 +48,9 @@ export class Sesion {
     escribir(CLAVE_VEHICULO, null);
     if (aviso) escribir(CLAVE_AVISO, aviso);
   }
+
+  /** Expiración en ms (la API la envía en UTC sin zona; FechaHora la interpreta como UTC). */
+  static expiraMs() { return FechaHora.aMs(Sesion.actual()?.expira) ?? 0; }
 
   static token() { return Sesion.actual()?.token ?? ""; }
   static tipo() { return Sesion.actual()?.tipo ?? null; }
